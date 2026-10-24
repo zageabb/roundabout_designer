@@ -92,7 +92,9 @@ assert html.index('class="simulation-toolbar"') < html.index('id="view"')
 assert html.count('id="playCars"') == 1
 assert html.count('id="pauseCars"') == 1
 assert "function mergeGeometry(v,progress,config)" in html
-assert "const r=outer-(v.targetLane-.5)*w" in html
+assert "const radius=outer-(targetLane-.5)*w" in html
+assert "mouths[name]={entry,exit}" in html
+assert "terminal.arrivalAngle" in html
 assert "Circulating destination lane" in html
 assert "Number(v.targetLane??v.lane)" in html
 assert "v.targetLane=Math.min(state.circulating,Number(el.value))" in html
