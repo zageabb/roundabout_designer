@@ -93,5 +93,7 @@ assert html.count('id="playCars"') == 1
 assert html.count('id="pauseCars"') == 1
 assert "function mergeGeometry(v,progress,config)" in html
 assert "const r=outer-(v.targetLane-.5)*w" in html
-assert "Merge into circulating lane" in html
+assert "Circulating destination lane" in html
+assert "Number(v.targetLane??v.lane)" in html
+assert "v.targetLane=Math.min(state.circulating,Number(el.value))" in html
 print("Layout, smooth merge paths, target-lane controls, and toolbar checks passed.")
