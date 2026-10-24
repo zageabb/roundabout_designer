@@ -66,3 +66,9 @@ The roundabout is composed of four **one-way curved segments**, four priority en
 **Milestone order:** (1) protect V1.26 regression suite; (2) incrementally extract pure geometry/model/simulation/render/UI modules; (3) unify vehicle paths; (4) generic priority merge and exit diverge; (5) temporal vehicle conflict zones; (6) validate reuse with a priority T-junction; (7) multiple-vehicle deterministic runs; (8) browser Worker/performance benchmarks; (9) evaluate optional server/API only against actual scale or collaboration needs.
 
 Full development contract: [INTERSECTION_CORE_PLAN.md](INTERSECTION_CORE_PLAN.md).
+
+## Future lane/junction rule editor and optimisation support
+
+Extending the common lane graph, expose a `RuleSet` (per-lane legal movements, priority, direction, access and signals) separately from per-vehicle compliance/override flags. Preserve original map-data provenance and compare the same demand and random seeds across immutable `LayoutVariant`/rule alternatives. A standard `ExperimentResult` must report network totals, throughput, queue/delay distributions and potential conflict measures, with calibration and missing-data warnings. Rules-only experiments should precede physical-layout alternatives; junction improvements can be offset by downstream congestion.
+
+An optional AI proposer can explore bounded changes and explain **already simulated** trade-offs, with explicit constraints and user approval. Candidate generation/optimisation must be independently executable without AI. See **[TRAFFIC_OPTIMISATION_PLAN.md](TRAFFIC_OPTIMISATION_PLAN.md)** for data, UI, benchmarking, map ingestion and acceptance conditions.
