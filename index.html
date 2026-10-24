@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.simulation-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}.simulation-toolbar .buttons{margin:0}.simulation-toolbar button{min-width:76px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.5</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.6</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -34,12 +34,13 @@ function normalizeVehicles(){
  for(const id of ['A','B']){
  const v=state.vehicles[id]||{arm:'North',side:'entry',lane:1};
  v.arm=['North','East','South','West'].includes(v.arm)?v.arm:'North';
- v.side=['entry','exit','circulating'].includes(v.side)?v.side:'entry';
+ v.side=['entry','exit','circulating','merging'].includes(v.side)?v.side:'entry';
  v.angle=((Number(v.angle??45)%360)+360)%360;
  v.speed=Math.max(0,Math.min(90,Number(v.speed??20)||0));
  v.progress=Math.max(0,Math.min(1,Number(v.progress??0)||0));
  v.waiting=Boolean(v.waiting);
- const limit=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='entry'?'in':'out'];
+ v.mergeProgress=Math.max(0,Math.min(1,Number(v.mergeProgress)||0));
+ const limit=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
  v.lane=Math.max(1,Math.min(limit,Math.floor(Number(v.lane)||1)));
  state.vehicles[id]=v;
  }
@@ -74,27 +75,58 @@ function safeAdvance(delta){
 // On an east approach this is 135°, rather than a visible jump to 90°.
 // This offset is provisional until lane-centreline curved paths are modelled.
 const entryAngles={North:45,East:135,South:225,West:315};
+// Geometric merge from the approach's give-way line into the outer circular lane.
+// local South approach is then rotated into the chosen compass arm.
+function mergeGeometry(v,progress,config){
+ const w=config.width*config.displayScale,inner=config.diameter*3.1;
+ const outer=inner+config.circulating*w,join=outer-18;
+ const r=outer-w/2,entryCount=config.arms[v.arm].in;
+ const x0=-entryCount*w+(v.lane-.5)*w,y0=join+45;
+ const endAngle=30*Math.PI/180;
+ const x3=-r*Math.sin(endAngle),y3=r*Math.cos(endAngle);
+ const x1=x0,y1=y0-65,x2=x3+65*Math.cos(endAngle),y2=y3+65*Math.sin(endAngle);
+ const t=Math.max(0,Math.min(1,progress)),u=1-t;
+ const x=u*u*u*x0+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x3;
+ const y=u*u*u*y0+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y3;
+ const dx=3*u*u*(x1-x0)+6*u*t*(x2-x1)+3*t*t*(x3-x2);
+ const dy=3*u*u*(y1-y0)+6*u*t*(y2-y1)+3*t*t*(y3-y2);
+ // Car's longitudinal axis is the negative-y direction in the SVG symbol.
+ const heading=Math.atan2(dx,-dy)*180/Math.PI;
+ return {x,y,heading};
+}
+function entryGapClear(id){
+ const v=state.vehicles[id],target=entryAngles[v.arm];
+ const other=state.vehicles[id==='A'?'B':'A'];
+ if(other.side==='merging'&&other.arm===v.arm)return false;
+ if(other.side!=='circulating')return true;
+ // Check along the entry's intended outer lane; this is a prototype,
+ // conservative at high circulating speeds, not a validated gap model.
+ if(other.lane!==1)return true;
+ const ahead=(other.angle-target+360)%360;
+ const behind=(target-other.angle+360)%360;
+ const speed=other.speed*Math.max(1,Number($('playSpeed').value)||20)/20;
+ const upstream=Math.min(170,Math.max(42,speed*2+15));
+ return !(ahead<32||behind<upstream);
+}
 function advanceEntries(delta){
- const ordered=['A','B'];
- for(const id of ordered){
-  const v=state.vehicles[id];
-  if(v.side!=='entry')continue;
-  const speedFactor=Math.max(0,v.speed/20);
-  v.progress=Math.min(1,v.progress+delta*speedFactor/45);
-  v.waiting=false;
-  if(v.progress<1||!speedFactor)continue;
-  const target=entryAngles[v.arm];
-  const competing=ordered.some(other=>{
-   if(other===id)return false;
-   const c=state.vehicles[other];
-   if(c.side!=='circulating')return false;
-   const approach=(target-c.angle+360)%360;
-   return approach<32||approach>356;
-  });
-  if(state.drivingMode==='safe'&&competing){v.waiting=true;continue}
-  v.side='circulating';v.lane=1;v.angle=target;v.progress=0;
-  v.waiting=false;
-  renderVehicles();
+ for(const id of ['A','B']){
+  const v=state.vehicles[id],speedFactor=Math.max(0,v.speed/20);
+  if(v.side==='entry'){
+   v.progress=Math.min(1,v.progress+delta*speedFactor/45);
+   v.waiting=false;
+   if(v.progress<1||!speedFactor)continue;
+   if(state.drivingMode==='safe'&&!entryGapClear(id)){v.waiting=true;continue}
+   v.side='merging';v.mergeProgress=0;v.waiting=false;
+   renderVehicles();
+  }else if(v.side==='merging'){
+   // A complete merge is deliberately slower than a frame: no teleportation.
+   v.mergeProgress=Math.min(1,v.mergeProgress+delta*speedFactor/55);
+   if(v.mergeProgress>=1){
+    v.side='circulating';v.lane=1;v.angle=(entryAngles[v.arm]+30)%360;
+    v.progress=0;v.mergeProgress=0;
+    renderVehicles();
+   }
+  }
  }
 }
 function advanceVehicles(delta){
@@ -123,7 +155,7 @@ function playbackTick(time){
 function renderVehicles(){
  normalizeVehicles();
  $('vehicles').innerHTML=['A','B'].map(id=>{
- const v=state.vehicles[id],n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='entry'?'in':'out'];
+ const v=state.vehicles[id],n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
  return '<strong>Vehicle '+id+'</strong><div class="row">'+
  '<select data-vehicle="'+id+'" data-field="arm" '+(v.side==='circulating'?'disabled':'')+'>'+['North','East','South','West'].map(x=>'<option '+(x===v.arm?'selected ':'')+'value="'+x+'">'+x+'</option>').join('')+'</select>'+
  '<select data-vehicle="'+id+'" data-field="side"><option value="entry" '+(v.side==='entry'?'selected':'')+'>Entry</option><option value="exit" '+(v.side==='exit'?'selected':'')+'>Exit</option><option value="circulating" '+(v.side==='circulating'?'selected':'')+'>Roundabout</option></select>'+
@@ -132,7 +164,7 @@ function renderVehicles(){
  $('vehicles').querySelectorAll('select,input').forEach(el=>{el.onchange=()=>{
  const v=state.vehicles[el.dataset.vehicle];
  if(el.dataset.field==='side'&&el.value==='circulating'&&v.side!=='circulating')v.angle=45;
- if(el.dataset.field==='side'&&el.value==='entry'){v.progress=0;v.waiting=false}
+ if(el.dataset.field==='side'&&el.value==='entry'){v.progress=0;v.mergeProgress=0;v.waiting=false}
  v[el.dataset.field]=['lane','angle','speed'].includes(el.dataset.field)?Number(el.value):el.value;
  stopPlayback();normalizeVehicles();renderVehicles();draw();
  };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';stopPlayback();draw()};});
@@ -334,13 +366,16 @@ function draw(){
  const orientation={South:0,West:90,North:180,East:270};
  for(const id of ['A','B']){
  const v=state.vehicles[id];
- const n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='entry'?'in':'out'];
- const x=v.side==='entry'?-n*w+(v.lane-.5)*w:(v.lane-.5)*w;
+ const n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
+ const x=v.side==='entry'||v.side==='merging'?-n*w+(v.lane-.5)*w:(v.lane-.5)*w;
  const y=join+(v.side==='entry'?210-165*v.progress:210),angle=orientation[v.arm],fill=id==='A'?'#f5ba43':'#4bb9f3';
  // Circulating lane 1 is outermost; all vehicle headings follow UK clockwise flow.
  const radius=inner+(state.circulating-v.lane+.5)*w,theta=v.angle*Math.PI/180;
+ const curve=v.side==='merging'?mergeGeometry(v,v.mergeProgress,state):null;
  const placement=v.side==='circulating'
  ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+(v.angle+90)+')'
+ :v.side==='merging'
+ ?'rotate('+angle+') translate('+curve.x+' '+curve.y+') rotate('+curve.heading+')'
  :'rotate('+angle+') translate('+x+' '+y+')';
  svg+='<g transform="'+placement+'">';
  svg+='<rect x="-13" y="-20" width="26" height="40" rx="7" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
