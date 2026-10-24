@@ -67,3 +67,10 @@ The app still runs by opening `index.html` or serving the repository root; there
 - `src/bootstrap.js` — export/import and initialisation.
 
 Classic scripts currently share scope for backwards compatibility; pure ES modules and DOM-independent simulation APIs are the **next** refactor, not yet completed. **Ubuntu/UDA deployment must publish the entire `src/` directory** along with `index.html`; copying only the HTML file will no longer start the app. Paths are relative to support `/apps/roundabout-designer/` deployments. CI also includes static-module and full-script-startup smoke tests.
+
+## V1.28 directed-lane network foundation
+
+- `src/lane-network.js` — **pure** lane graph, stable lane and junction-node IDs, legal turn options, provisional route plans, preliminary parallel/crossing merge relationship classification, and the vehicle-pose sampler used by both drawing and travel trails.
+- The default roundabout contains **8 junction nodes, 16 directional segments, 45 directed lanes and 18 permitted turn options**. The network remains a schematic topology model; physical lane-transition geometry and time-based conflict analysis come next.
+- The A/B vehicle cards now show a **Lane path** summary. East lane 2 is straight-only by default; an intentional East lane 2 → South left-turn override remains available and visibly labelled.
+- Existing exports, animations, trajectory curves and lane settings are retained. UDA must deploy the new `src/lane-network.js` together with the rest of the static asset directory.
