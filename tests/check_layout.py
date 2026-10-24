@@ -62,4 +62,9 @@ assert "v.angle=45" in html
 assert "el.oninput=()" in html
 assert 'max="355" step="5"' in html
 assert 'data-nudge="-1"' in html and 'data-nudge="1"' in html
-print("UK layout and fine vehicle position controls checked.")
+assert "function advanceVehicles(delta)" in html
+assert "function playbackTick(time)" in html
+assert "requestAnimationFrame(playbackTick)" in html
+assert "if(v.side==='circulating')" in html
+assert 'id="playCars"' in html and 'id="pauseCars"' in html and 'id="stepCars"' in html
+print("UK layout, vehicle placement and circulating playback controls checked.")
