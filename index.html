@@ -205,10 +205,16 @@ function draw(){
  }
  const orientation={South:0,West:90,North:180,East:270};
  for(const id of ['A','B']){
- const v=state.vehicles[id],n=state.arms[v.arm][v.side==='entry'?'in':'out'];
+ const v=state.vehicles[id];
+ const n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='entry'?'in':'out'];
  const x=v.side==='entry'?-n*w+(v.lane-.5)*w:(v.lane-.5)*w;
  const y=join+210,angle=orientation[v.arm],fill=id==='A'?'#f5ba43':'#4bb9f3';
- svg+='<g transform="rotate('+angle+') translate('+x+' '+y+')">';
+ // Circulating lane 1 is outermost; all vehicle headings follow UK clockwise flow.
+ const radius=outer-(v.lane-.5)*w,theta=v.angle*Math.PI/180;
+ const placement=v.side==='circulating'
+ ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+v.angle+')'
+ :'rotate('+angle+') translate('+x+' '+y+')';
+ svg+='<g transform="'+placement+'">';
  svg+='<rect x="-13" y="-20" width="26" height="40" rx="7" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
  svg+='<rect x="-9" y="-10" width="18" height="12" rx="3" fill="#dceef5" stroke="#19354b"/>';
  svg+='<text x="0" y="3" font-size="16" fill="#102d42" font-weight="800" text-anchor="middle" dominant-baseline="middle">'+id+'</text></g>';
