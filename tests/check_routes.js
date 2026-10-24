@@ -1,6 +1,6 @@
 // Exercise route choice, parallel merging and end-to-end circular exits.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const html=fs.readFileSync('index.html','utf8');
+const html=require('./read_app').readAppSource();
 function section(a,b){const i=html.indexOf(a),j=html.indexOf(b,i);assert(i>=0&&j>i,'Missing '+a);return html.slice(i,j)}
 const funcs=[
  section('function routeDestination(origin,movement){','function deriveConnections('),
