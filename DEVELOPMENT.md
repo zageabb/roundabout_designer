@@ -34,3 +34,11 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Circulating flow arrows centred within the circulating annulus.
 - Existing UK approach counts and movements unchanged.
 - Static source checks updated, but rendered browser and GitHub CI success should be verified after UDA deployment.
+
+## V1.5 permitted-turn topology (24 Oct 2026)
+- Model can now derive a destination arm for every allowed lane movement. The provided default has 18 lane/movement combinations across 13 inbound lanes.
+- North/East/South/West all use left-hand clockwise ordering for left, straight and right exits.
+- A configuration panel lists the resulting lane-to-destination options and refreshes when lane permissions change.
+- Optional dashed cyan overview links are explicitly schematic only; no swept paths, lane assignments inside the roundabout or weaving analysis yet.
+- JSON maintains the route overlay selection. Regression checks cover canonical route relationships.
+- Next: persistent explicit lane-to-circulating-lane and circulating-to-exit-lane mappings, with engineering geometry and vehicle-safe paths.
