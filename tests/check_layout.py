@@ -45,4 +45,8 @@ assert len(paths) == 18
 assert ("East", 1, "L", "South") in paths
 assert ("North", 3, "R", "West") in paths
 assert ("South", 4, "R", "East") in paths
-print("UK lane layout and 18 permitted turning connections checked.")
+assert "function provisionalLaneMapping(config)" in html
+assert "function validateNetwork(config)" in html
+assert "circulatingLane:entry,exitLane:exit,status:'provisional'" in html
+assert "Provisional mapping only" in html
+print("UK lane layout, 18 turning connections and provisional lane mapping checked.")
