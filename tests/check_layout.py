@@ -71,4 +71,6 @@ assert "function proximityWarning()" in html
 assert "v.speed/20" in html
 assert 'data-field="speed"' in html
 assert "gap<8" in html
+assert "Vehicle '+id+' speed (°/s)" in html
+assert "data-field=\"speed\"" in html
 print("UK layout, playback, independent speeds and proximity checks passed.")
