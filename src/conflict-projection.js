@@ -60,7 +60,8 @@ const ConflictProjection=(()=>{
  function assessVehicles(config,vehicles,geometry,options={}){
   const samplesA=forecast(config,vehicles.A,geometry,options);
   const samplesB=forecast(config,vehicles.B,geometry,options);
-  const result=ConflictEngine.assess(samplesA,samplesB,{
+  const core=typeof ConflictEngine!=='undefined'?ConflictEngine:require('./conflict-engine.js');
+  const result=core.assess(samplesA,samplesB,{
    clearanceMetres:2.4,stepSeconds:0.15,
    ...(options.clearanceMetres?{clearanceMetres:options.clearanceMetres}:{})
   });
