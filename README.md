@@ -74,3 +74,9 @@ Classic scripts currently share scope for backwards compatibility; pure ES modul
 - The default roundabout contains **8 junction nodes, 16 directional segments, 45 directed lanes and 18 permitted turn options**. The network remains a schematic topology model; physical lane-transition geometry and time-based conflict analysis come next.
 - The A/B vehicle cards now show a **Lane path** summary. East lane 2 is straight-only by default; an intentional East lane 2 → South left-turn override remains available and visibly labelled.
 - Existing exports, animations, trajectory curves and lane settings are retained. UDA must deploy the new `src/lane-network.js` together with the rest of the static asset directory.
+
+## V1.29 projected route interaction
+- The A/B settings now show a **Projected route interaction** readout for the next 8 seconds, checking where the two projected car centreline paths are close together and whether their predicted arrival times coincide.
+- **Show projected conflict location** draws a blue ring for paths intersecting at different forecast times and an amber ring for possible simultaneous proximity. The toggle is included in saved JSON.
+- This is a non-invasive visual warning; **Safe following**, **Unrestricted / risky**, playback and legal/override exit selection all still behave as before. It does not determine a crash or driving responsibility.
+- The numerical kernel lives in `src/conflict-engine.js` and can be reused for future junction types. `src/conflict-projection.js` currently adapts roundabout movement and intentionally assumes constant speed with no yielding/braking. The model's 2.4 m centreline proximity threshold is a visual screening convention, **not** a calibrated clearance standard.
