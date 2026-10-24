@@ -42,3 +42,9 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Optional dashed cyan overview links are explicitly schematic only; no swept paths, lane assignments inside the roundabout or weaving analysis yet.
 - JSON maintains the route overlay selection. Regression checks cover canonical route relationships.
 - Next: persistent explicit lane-to-circulating-lane and circulating-to-exit-lane mappings, with engineering geometry and vehicle-safe paths.
+
+## V1.6 provisional lane mapping
+- Each permitted movement now receives a deterministic entry → circulating lane → exit lane suggestion, shown on the approach connectivity panel.
+- Circulating lanes are indexed outer-to-inner. Left turns prefer outer, right turns inner, straight turns a middle lane (all clamped to the circulating count). Exit-lane assignment is provisional and must not be used as vehicle trajectory truth.
+- Added network validation for lane counts and movement codes, including during JSON import.
+- Actual spiral transitions, mandatory lane changes, conflict points and geometric continuity remain to be implemented before running vehicle flow simulation.
