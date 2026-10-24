@@ -21,9 +21,9 @@ for(const config of configurations){
  const outer=config.diameter*3.1+config.circulating*w;
  const end=Math.max(490,outer+245);
  const geo=roadSurfaceGeometry(config,outer,end);
- assert.equal((geo.surface.match(/\\bA /g)||[]).length,4,'One circular arc between each pair of arms');
- assert.equal((geo.surface.match(/\\bC /g)||[]).length,8,'Two smooth shoulders on each arm');
- assert.equal((geo.kerbs.match(/\\bA /g)||[]).length,4,'Continuous outer kerb arcs');
+ assert.equal((geo.surface.match(/ A /g)||[]).length,4,'One circular arc between each pair of arms');
+ assert.equal((geo.surface.match(/ C /g)||[]).length,8,'Two smooth shoulders on each arm');
+ assert.equal((geo.kerbs.match(/ A /g)||[]).length,4,'Continuous outer kerb arcs');
  assert(!/NaN|Infinity|undefined/.test(geo.surface+' '+geo.kerbs));
  assert(geo.surface.trim().endsWith('Z'),'Single closed road surface');
  for(const arm of Object.values(config.arms)){
