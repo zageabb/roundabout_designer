@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.2</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.3</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -165,14 +165,37 @@ function movementArrow(x,y,movement,scale=1){
  // Unselected straight direction does not get an arrowhead.
  return '<g transform="translate('+x+' '+y+') scale('+scale+')" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+p.join(' ')+'"/></g>';
 }
+// Geometry-only assessment: clockwise forward headway and relative speed.
+// Rates are displayed in degrees/s; estimated metres use the current SVG scale.
+function vehicleConflictAssessment(config){
+ const a=config.vehicles.A,b=config.vehicles.B;
+ if(a.side!=='circulating'||b.side!=='circulating')return {status:'inactive'};
+ if(a.lane!==b.lane)return {status:'different-lanes'};
+ const forwardAB=(b.angle-a.angle+360)%360;
+ const forwardBA=(a.angle-b.angle+360)%360;
+ const radius=config.diameter*3.1+(config.circulating-a.lane+.5)*config.width*config.displayScale;
+ const metresPerDegree=radius*Math.PI/(180*config.displayScale);
+ const abClosing=a.speed-b.speed,baClosing=b.speed-a.speed;
+ const candidates=[
+  {following:'A',leading:'B',headway:forwardAB,closing:abClosing},
+  {following:'B',leading:'A',headway:forwardBA,closing:baClosing}
+ ];
+ const close=candidates.filter(c=>c.closing>0).map(c=>({...c,seconds:c.headway/c.closing}));
+ close.sort((x,y)=>x.seconds-y.seconds);
+ const nearestDegrees=Math.min(forwardAB,forwardBA);
+ return {status:nearestDegrees*metresPerDegree<8?'near':'clear',
+  nearestMetres:nearestDegrees*metresPerDegree,metresPerDegree,
+  closest:close[0]||null};
+}
 function proximityWarning(){
- const a=state.vehicles.A,b=state.vehicles.B,notice=$('proximity');if(!notice)return;
- if(a.side!=='circulating'||b.side!=='circulating'){notice.textContent='Place both vehicles on circulating lanes to monitor spacing.';return}
- if(a.lane!==b.lane){notice.textContent='A and B are circulating in different lanes. No same-lane spacing alert.';return}
- const difference=Math.abs(a.angle-b.angle),separation=Math.min(difference,360-difference);
- const radius=state.diameter*3.1+(state.circulating-a.lane+.5)*state.width*state.displayScale;
- const gap=separation*Math.PI/180*radius/state.displayScale;
- notice.textContent=gap<8?'Proximity warning: A and B are approximately '+gap.toFixed(1)+' m apart in the same lane.':'Same-lane spacing: approximately '+gap.toFixed(1)+' m.';
+ const notice=$('proximity');if(!notice)return;
+ const result=vehicleConflictAssessment(state);
+ if(result.status==='inactive'){notice.textContent='Place both vehicles on circulating lanes to monitor spacing.';return}
+ if(result.status==='different-lanes'){notice.textContent='Vehicles occupy different circulating lanes; same-lane following check inactive.';return}
+ const gap=result.nearestMetres.toFixed(1);
+ const closing=result.closest;
+ const catchUp=closing?' '+closing.following+' is closing on '+closing.leading+' at '+closing.closing.toFixed(1)+'°/s (estimated catch-up '+closing.seconds.toFixed(1)+' s, assuming constant speeds).':' Neither vehicle is currently closing on the other.';
+ notice.textContent=(result.status==='near'?'Proximity warning — ':'Same-lane nearest separation: ')+gap+' m.'+catchUp;
 }
 function draw(){
  normalizeVehicles();
