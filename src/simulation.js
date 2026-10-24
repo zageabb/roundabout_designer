@@ -36,6 +36,30 @@ function vehicleWorldPosition(v,config){
  const pose=LaneNetwork.sampleVehiclePose(config,v,{mergeGeometry,exitGeometry});
  return [pose.x,pose.y];
 }
+// Independent projection diagnostic only: no braking, yielding or movement
+// decisions use this result. The simulation continues to use its existing
+// safe-following/priority rules until occupancy prediction is calibrated.
+function projectedVehicleInteraction(){
+ const report=ConflictProjection.assessVehicles(state,state.vehicles,{
+  mergeGeometry,exitGeometry,circularExitStart,
+  sampleVehiclePose:LaneNetwork.sampleVehiclePose
+ },{horizonSeconds:8,stepSeconds:0.25,playbackSpeed:Math.max(1,Math.min(90,Number($('playSpeed').value)||20))});
+ const el=$('projectedConflict');
+ if(el){
+  const clearance=report.closestSpatialMetres.toFixed(1);
+  if(report.type==='possible_overlap'){
+   el.className='status conflict-warning';
+   el.textContent='Possible simultaneous path occupancy in '+report.timeSeconds.toFixed(1)+' s (minimum projected centreline distance '+report.closestSimultaneousMetres.toFixed(1)+' m). Geometric warning only; no crash or priority finding.';
+  }else if(report.type==='paths_intersect_different_times'){
+   el.className='status conflict-spatial';
+   el.textContent='Paths approach within '+clearance+' m, but at different projected times (estimated arrival gap '+report.arrivalGapSeconds.toFixed(1)+' s). No simultaneous centreline overlap predicted.';
+  }else{
+   el.className='status';
+   el.textContent='No close path interaction projected in the next 8 seconds. Current minimum centreline clearance '+report.closestSimultaneousMetres.toFixed(1)+' m.';
+  }
+ }
+ return report;
+}
 function recordScenarioEvent(vehicle,event,detail){
  if(!runState)return;
  runState.events.push({time:runState.seconds,vehicle,event,detail});
