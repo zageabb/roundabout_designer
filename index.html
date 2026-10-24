@@ -28,18 +28,43 @@ let active='North';
 const defaultVehicles=()=>({A:{arm:'North',side:'entry',lane:1,speed:20},B:{arm:'South',side:'exit',lane:1,speed:15}});
 state.vehicles=defaultVehicles();
 state.drivingMode='safe';state.minGap=8;
+// Exit choices derive from the entry lane's permitted turn movements.
+function allowedExitArms(v,config){
+ const lanes=config.arms[v.arm],lane=Math.min(lanes.in,Math.max(1,Math.floor(v.entryLane||v.lane||1)));
+ return [...new Set((lanes.moves[lane-1]||'S').split('').map(turn=>routeDestination(v.arm,turn)))];
+}
+function circularExitStart(destination){return (entryAngles[destination]+360-28)%360}
+function crossesClockwiseAngle(before,step,target){
+ const forward=(target-before+360)%360;
+ return step>0 && forward<=step+1e-7;
+}
+// Different approach lanes going into distinct circular lanes can merge together.
+// Crossovers, same lane allocations, and identical starts are still serialized.
+function mergingPathsConflict(a,b){
+ if(a.arm!==b.arm)return false;
+ if(a.lane===b.lane || a.targetLane===b.targetLane)return true;
+ return (a.lane-b.lane)*(a.targetLane-b.targetLane)<0;
+}
 let playback=false,playbackFrame=null,previousFrame=null;
 function normalizeVehicles(){
  if(!state.vehicles)state.vehicles=defaultVehicles();
  for(const id of ['A','B']){
  const v=state.vehicles[id]||{arm:'North',side:'entry',lane:1};
  v.arm=['North','East','South','West'].includes(v.arm)?v.arm:'North';
- v.side=['entry','exit','circulating','merging'].includes(v.side)?v.side:'entry';
+ v.side=['entry','exit','circulating','merging','exiting'].includes(v.side)?v.side:'entry';
  v.angle=((Number(v.angle??45)%360)+360)%360;
  v.speed=Math.max(0,Math.min(90,Number(v.speed??20)||0));
  v.progress=Math.max(0,Math.min(1,Number(v.progress??0)||0));
  v.waiting=Boolean(v.waiting);
  v.mergeProgress=Math.max(0,Math.min(1,Number(v.mergeProgress)||0));
+ v.exitProgress=Math.max(0,Math.min(1,Number(v.exitProgress)||0));
+ if(v.side==='entry')v.entryLane=v.lane;
+ else v.entryLane=Math.max(1,Math.min(state.arms[v.arm].in,Math.floor(Number(v.entryLane)||v.lane||1)));
+ const destinations=allowedExitArms(v,state);
+ if(v.exitArm===undefined)v.exitArm=v.side==='circulating'?'none':destinations[0];
+ if(v.side!=='exit' && !['none',...destinations].includes(v.exitArm))v.exitArm=destinations[0];
+ const exits=state.arms[v.exitArm]?.out||1;
+ v.exitLane=Math.max(1,Math.min(exits,Math.floor(Number(v.exitLane)||Math.min(v.targetLane||v.lane,exits))));
  v.targetLane=Math.max(1,Math.min(state.circulating,Math.floor(Number(v.targetLane??v.lane)||1)));
  const limit=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
  v.lane=Math.max(1,Math.min(limit,Math.floor(Number(v.lane)||1)));
@@ -112,7 +137,7 @@ function mergeGeometry(v,progress,config){
 function entryGapClear(id){
  const v=state.vehicles[id],target=entryAngles[v.arm];
  const other=state.vehicles[id==='A'?'B':'A'];
- if(other.side==='merging'&&other.arm===v.arm)return false;
+ if(other.side==='merging'&&mergingPathsConflict(v,other))return false;
  if(other.side!=='circulating')return true;
  // Check along the entry's intended outer lane; this is a prototype,
  // conservative at high circulating speeds, not a validated gap model.
@@ -145,11 +170,45 @@ function advanceEntries(delta){
   }
  }
 }
+// Turn smoothly from the circular lane into the selected outbound lane.
+// Uses the finished road's exit-mouth profile, matching the same outline as
+// roadSurfaceGeometry; unlike the old fixed exit sprites this has a heading tangent.
+function exitGeometry(v,progress,config){
+ const w=config.width*config.displayScale,inner=config.diameter*3.1,outer=inner+config.circulating*w;
+ const join=outer-18,end=Math.max(490,outer+245);
+ const profile=roadSurfaceGeometry(config,outer,end).mouths[v.exitArm].exit;
+ const radius=outer-(v.lane-.5)*w,beta=28*Math.PI/180;
+ const x0=radius*Math.sin(beta),y0=radius*Math.cos(beta);
+ const x3=(v.exitLane-.5)*w,y3=outer+142;
+ const lateral=Math.max(0,x0-x3);
+ const handle=Math.min(72,Math.max(0,lateral*.78/Math.cos(beta)),Math.max(10,y3-y0)*.7);
+ const x1=x0-handle*Math.cos(beta),y1=y0+handle*Math.sin(beta);
+ const x2=x3,y2=y3-Math.min(75,(y3-y0)*.4);
+ const t=Math.max(0,Math.min(1,progress)),u=1-t;
+ const x=u*u*u*x0+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x3;
+ const y=u*u*u*y0+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y3;
+ const dx=3*u*u*(x1-x0)+6*u*t*(x2-x1)+3*t*t*(x3-x2);
+ const dy=3*u*u*(y1-y0)+6*u*t*(y2-y1)+3*t*t*(y3-y2);
+ const heading=Math.atan2(dx,-dy)*180/Math.PI;
+ return {x,y,heading,mouth:profile};
+}
 function advanceVehicles(delta){
  const increments=safeAdvance(delta);
  for(const id of ['A','B']){
  const v=state.vehicles[id];
- if(v.side==='circulating')v.angle=(v.angle+increments[id]+360)%360;
+ if(v.side==='circulating'){
+  const increment=increments[id];
+  if(v.exitArm&&v.exitArm!=='none'&&crossesClockwiseAngle(v.angle,increment,circularExitStart(v.exitArm))){
+   v.angle=circularExitStart(v.exitArm);v.side='exiting';v.exitProgress=0;renderVehicles();
+  }else v.angle=(v.angle+increment+360)%360;
+ }else if(v.side==='exiting'){
+  v.exitProgress=Math.min(1,v.exitProgress+delta*Math.max(0,v.speed/20)/55);
+  if(v.exitProgress>=1){
+   const destination=v.exitArm,exitLane=v.exitLane;
+   v.side='exit';v.arm=destination;v.lane=exitLane;v.exitArm='none';v.exitProgress=0;
+   renderVehicles();
+  }
+ }
  }
  advanceEntries(delta);
  draw();
