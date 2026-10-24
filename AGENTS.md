@@ -24,3 +24,8 @@
 - Road/mapping import must preserve provenance and mark unknown lane markings, controls and turning counts for confirmation; an imported route graph must use the same core data model as manually drawn roads.
 - Optimisation must use independently testable numerical simulation and constraint validation. AI is an optional candidate proposer/explainer only; no silent scenario mutation, unsupported claim of capacity gain, or execution of unapproved roadway changes. Physical modifications require separate feasibility/cost/land/safety considerations.
 - Follow `TRAFFIC_OPTIMISATION_PLAN.md` only after base `INTERSECTION_CORE_PLAN.md` dependencies are met; preserve legacy roundabout user experience and offline operation.
+
+## V1.27 static asset and testing contract
+- The current `index.html` loads six ordered classic scripts from `src/` and one stylesheet. Preserve this order and relative URLs unless migrating both browser delivery and tests intentionally. Never re-inline the entire application simply to avoid updating a test.
+- When moving functions between scripts, maintain correct initialisation order and verify `tests/read_app.js`, `tests/check_modules.js`, `tests/check_runtime.js`, plus all other existing regression suites. Shared-global classic scripts are transitional; do not assume they are isolated ES modules.
+- UDA/static publishing must include `src/` assets at the application's relative prefix. Document and verify any reverse-proxy-specific change without hard-coded server-root asset paths.
