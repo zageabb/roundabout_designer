@@ -79,3 +79,11 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Report approximate nearest spacing and a constant-speed catch-up time for the faster following car.
 - Explicitly label this as a geometric estimate; it does not account for braking, merges, vehicle lengths, changes in acceleration or collision prediction.
 - No automatic vehicle stopping or control decisions.
+
+## V1.14 optional driving behaviour (24 Oct 2026)
+- New driving-mode selector: safe following (default) vs unrestricted/risky playback.
+- Safe-following clamps the faster same-lane vehicle's angular advancement based on a user-set minimum gap (default 8 m, range 2–30 m), without changing configured target speed.
+- Unrestricted mode retains original playback without intervening, supporting future deliberate hazardous-driving experiments.
+- Behaviour preference and minimum gap persist in JSON; both reset to safe defaults.
+- This is not validated car-following physics and does not model vehicle body lengths, acceleration, priority, incidents or actual crashes. It currently affects only the two circulating cars.
+- Future incident simulation should be separately toggleable, with seeded scenarios and incident records rather than treating overlapping vehicle graphics as a confirmed crash.
