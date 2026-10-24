@@ -70,7 +70,9 @@ assert 'id="playCars"' in html and 'id="pauseCars"' in html and 'id="stepCars"' 
 assert "function proximityWarning()" in html
 assert "v.speed/20" in html
 assert 'data-field="speed"' in html
-assert "gap<8" in html
+assert "function vehicleConflictAssessment(config)" in html
+assert "nearestDegrees*metresPerDegree<8" in html
+assert "headway/c.closing" in html
 assert "Vehicle '+id+' speed (°/s)" in html
 assert "data-field=\"speed\"" in html
-print("UK layout, playback, independent speeds and proximity checks passed.")
+print("UK layout, playback, closing speed and headway source checks passed.")
