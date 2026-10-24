@@ -127,3 +127,12 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - When an off-rule route is selected, the vehicle card shows a distinct `Rule-breaking route` warning. The flag and destination are serialized to JSON and restored on import.
 - Turning the override off restores a legal route if the selected destination was not permitted; automatic safe following and vehicle spacing remain unchanged by this flag. The flag models a deliberate route/marking violation, **not** a confirmed collision or a suspension of all give-way rules.
 - CI includes executable coverage confirming legal defaults, allowed override selection, forbidden-route labelling, disabling/resetting the override, and JSON round-trip preservation.
+
+## V1.26 scenario replay and telemetry
+- Added a **Replay scenario** control beside Play/Pause/Step: captures the vehicles' starting configuration at the first Play/Step, then resets their positions, route choices, overrides and waiting states to replay the same experiment without changing the road layout.
+- Changing a vehicle, permitted movement, lane count, roundabout geometry or safe-driving setting invalidates the previous replay snapshot and per-run activity. Pausing retains it. Changing path visibility does not change the scenario.
+- Optional **Show travelled paths** draws colour-coded A/B trajectory polylines on the shared SVG road surface, sampled at 3 px minimum spacing and capped at 360 points per car to avoid unbounded growth.
+- The **Scenario activity** monitor tracks playback-equivalent seconds, approximate give-way waiting time per car, and event transitions (start, intentional rule override, give-way wait/release, entry merge, circulation, exit turn, exit completion).
+- **Export events CSV** produces a quoted CSV with event timestamps, car identifiers and descriptions; live telemetry is not part of saved JSON configurations.
+- Added executable `tests/check_scenario.js`, exercising trail points, status changes, wait accounting, replay determinism and off-rule exit persistence. This test is included in CI.
+- **Limitations:** two-vehicle demonstrator, no calibrated physical vehicle speed or waiting-time prediction, path-trail rendering is only a visual aid, and observed visual proximity is not an accident determination. A larger deterministic traffic-flow/queue engine remains future development.
