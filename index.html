@@ -212,7 +212,7 @@ function draw(){
  // Circulating lane 1 is outermost; all vehicle headings follow UK clockwise flow.
  const radius=outer-(v.lane-.5)*w,theta=v.angle*Math.PI/180;
  const placement=v.side==='circulating'
- ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+v.angle+')'
+ ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+(v.angle+90)+')'
  :'rotate('+angle+') translate('+x+' '+y+')';
  svg+='<g transform="'+placement+'">';
  svg+='<rect x="-13" y="-20" width="26" height="40" rx="7" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
