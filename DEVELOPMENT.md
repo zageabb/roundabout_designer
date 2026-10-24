@@ -26,3 +26,11 @@ Add tests for left-side orientation, clockwise flow, all arm lane movements, min
 
 ## Simulation-oriented design decision (24 Oct 2026)
 The long-term purpose is vehicle-volume simulation with optional AI analysis. Keep geometry, lane connectivity, demand, simulation, rendering and AI interface as separate modules. See `SIMULATION_ARCHITECTURE.md`. Ubuntu UDA deployment preparation is in `deploy/README.md`, but live server configuration remains unverified.
+
+## V1.4 visual readability update (24 Oct 2026)
+- Independent `displayScale` control changes pixels per metre in the SVG without altering physical lane width.
+- Dynamic canvas fits wider lane counts and island diameters instead of clipping arm labels.
+- Show/hide lane numbers; persisted in JSON.
+- Circulating flow arrows centred within the circulating annulus.
+- Existing UK approach counts and movements unchanged.
+- Static source checks updated, but rendered browser and GitHub CI success should be verified after UDA deployment.
