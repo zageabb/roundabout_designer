@@ -93,3 +93,5 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - At the line, safe mode checks whether the other vehicle is circulating immediately upstream of that arm. When occupied it waits; when clear it joins outer circulating lane 1.
 - Unrestricted/risky mode bypasses that preliminary give-way check. JSON exports preserve progress and driving mode.
 - This is a two-vehicle, schematic demonstrator rather than junction-engineering-valid yielding: no acceleration profiles, route-based lane selection, swept-path geometry, queueing multiple entry vehicles, or calibrated time gaps.
+
+- Entry-to-circulatory heading correction: join angles are North 45°, East 135°, South 225°, West 315°, used consistently for give-way proximity and initial circulating position. This removes radial-axis snapping (East 90°). A true lane-centreline interpolation/turn arc remains future work; these positions are an approximation.

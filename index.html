@@ -70,7 +70,10 @@ function safeAdvance(delta){
 }
 // The entry stage is intentionally simple. Position 0 is back on the approach;
 // position 1 reaches the give-way line and joins the outer circulating lane.
-const entryAngles={North:0,East:90,South:180,West:270};
+// Enter at the approach-to-circulatory merge angle, not the radial centreline.
+// On an east approach this is 135°, rather than a visible jump to 90°.
+// This offset is provisional until lane-centreline curved paths are modelled.
+const entryAngles={North:45,East:135,South:225,West:315};
 function advanceEntries(delta){
  const ordered=['A','B'];
  for(const id of ordered){

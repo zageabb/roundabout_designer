@@ -81,7 +81,10 @@ assert "gapDegrees=state.minGap" in html
 assert 'id="drivingMode"' in html
 assert 'id="minGap"' in html
 assert "function advanceEntries(delta)" in html
-assert "const entryAngles={North:0,East:90,South:180,West:270}" in html
+assert "const entryAngles={North:45,East:135,South:225,West:315}" in html
+# Every entry should merge 45 degrees clockwise after its approach bearing.
+assert "const target=entryAngles[v.arm]" in html
+assert "const approach=(target-c.angle+360)%360" in html
 assert "if(state.drivingMode==='safe'&&competing)" in html
 assert "v.side='circulating';v.lane=1" in html
 print("Roundabout entry advance, optional give-way, and vehicle playback checks passed.")
