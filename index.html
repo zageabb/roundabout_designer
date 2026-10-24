@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.simulation-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}.simulation-toolbar .buttons{margin:0}.simulation-toolbar button{min-width:76px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.21</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.22</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -288,6 +288,49 @@ function proximityWarning(){
  const catchUp=closing?' '+closing.following+' is closing on '+closing.leading+' at '+closing.closing.toFixed(1)+'°/s (estimated catch-up '+closing.seconds.toFixed(1)+' s, assuming constant speeds).':' Neither vehicle is currently closing on the other.';
  notice.textContent=(result.status==='near'?'Proximity warning — ':'Same-lane nearest separation: ')+gap+' m.'+catchUp;
 }
+// Build the entire roadway as one closed perimeter. Separate overlapping arm
+// fills used to make visible cusps and pinched shoulders at their intersections.
+function roadSurfaceGeometry(config,outer,end){
+ const w=config.width*config.displayScale,shoulder=outer+104;
+ function edge(side,count){
+  const width=count*w;
+  const lip=Math.min(outer*.86,Math.max(width+Math.max(18,w*.53),outer*.43));
+  const y0=Math.sqrt(Math.max(0,outer*outer-lip*lip));
+  // Never let a Bezier handle cross the straight road edge: this was the
+  // cause of the North/West inward loops in the previous two versions.
+  const dx=Math.max(0,Math.min((lip-width)*.72,56));
+  const dy=y0?dx*lip/y0:0,sign=side==='left'?-1:1;
+  return {
+   start:[sign*lip,y0],ctrl1:[sign*(lip-dx),y0+dy],
+   ctrl2:[sign*width,shoulder-62],end:[sign*width,shoulder],
+   corner:[sign*width,end]
+  };
+ }
+ function rotate(point,degrees){
+  const a=degrees*Math.PI/180,c=Math.cos(a),q=Math.sin(a);
+  return [point[0]*c-point[1]*q,point[0]*q+point[1]*c];
+ }
+ const xy=p=>p[0].toFixed(3)+' '+p[1].toFixed(3);
+ const arms=[['North',180],['East',270],['South',0],['West',90]];
+ const segments=arms.map(([name,angle])=>{
+  const a=config.arms[name];
+  const convert=e=>Object.fromEntries(Object.entries(e).map(([k,p])=>[k,rotate(p,angle)]));
+  return {left:convert(edge('left',a.in)),right:convert(edge('right',a.out))};
+ });
+ const surface=['M '+xy(segments[0].right.start)],kerbs=[];
+ for(let i=0;i<segments.length;i++){
+  const {left:l,right:r}=segments[i],next=segments[(i+1)%segments.length].right;
+  surface.push('C '+[r.ctrl1,r.ctrl2,r.end].map(xy).join(' '));
+  surface.push('L '+xy(r.corner),'L '+xy(l.corner),'L '+xy(l.end));
+  surface.push('C '+[l.ctrl2,l.ctrl1,l.start].map(xy).join(' '));
+  surface.push('A '+outer+' '+outer+' 0 0 1 '+xy(next.start));
+  kerbs.push('M '+xy(r.start)+' C '+[r.ctrl1,r.ctrl2,r.end].map(xy).join(' ')+' L '+xy(r.corner));
+  kerbs.push('M '+xy(l.corner)+' L '+xy(l.end)+' C '+[l.ctrl2,l.ctrl1,l.start].map(xy).join(' '));
+  kerbs.push('M '+xy(l.start)+' A '+outer+' '+outer+' 0 0 1 '+xy(next.start));
+ }
+ surface.push('Z');
+ return {surface:surface.join(' '),kerbs:kerbs.join(' ')};
+}
 function draw(){
  normalizeVehicles();
  proximityWarning();
@@ -296,33 +339,15 @@ function draw(){
  const join=outer-18, end=Math.max(490,outer+245);
  const extent=end+76, canvas=extent*2;
  let svg='<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+canvas+' '+canvas+'" role="img" aria-label="UK left-driving clockwise roundabout"><rect width="'+canvas+'" height="'+canvas+'" fill="#e9f2e5"/><g transform="translate('+extent+' '+extent+')">';
- // Carriageway under all connecting approach roads.
- svg+='<circle r="'+outer+'" fill="#454c51"/>';
+ // One continuous outline removes old arm/disk overlap artifacts.
+ const road=roadSurfaceGeometry(state,outer,end);
+ svg+='<path d="'+road.surface+'" fill="#454c51"/>';
+ svg+='<path d="'+road.kerbs+'" fill="none" stroke="#eef1ed" stroke-width="2.5"/>';
  const arms=[['South',0],['West',90],['North',180],['East',270]];
  for(const [name,rot] of arms){
    const a=state.arms[name],ei=a.in*w,eo=a.out*w,flare=Math.min(w/2,16);
+   const shoulder=outer+104;
    svg+='<g transform="rotate('+rot+')">';
-   // Geometry-driven outer road shoulders: the mouth begins exactly on the
-   // circle's outside kerb, with the first control tangent to its circumference.
-   // This removes the earlier straight-edged notches and radial white seams.
-   const armJoinProfile={
-     North:{sweep:.17,tangent:95,shoulderLift:150},
-     East:{sweep:.22,tangent:75,shoulderLift:122},
-     South:{sweep:.21,tangent:80,shoulderLift:130},
-     West:{sweep:.17,tangent:95,shoulderLift:150}
-   };
-   const profile=armJoinProfile[name];
-   const shoulder=join+profile.shoulderLift,sweep=Math.PI*profile.sweep,sy=outer*Math.cos(sweep);
-   const lip=outer*Math.sin(sweep),tx=Math.cos(sweep)*profile.tangent,ty=Math.sin(sweep)*profile.tangent;
-   const leftEdge='M '+(-lip)+' '+sy+' C '+(-lip+tx)+' '+(sy+ty)+' '+(-ei)+' '+(shoulder-66)+' '+(-ei)+' '+shoulder+' L '+(-ei)+' '+end;
-   const rightEdge='M '+lip+' '+sy+' C '+(lip-tx)+' '+(sy+ty)+' '+eo+' '+(shoulder-66)+' '+eo+' '+shoulder+' L '+eo+' '+end;
-   // Same-colour overlapping fills join the disk without seams.
-   svg+='<path d="'+leftEdge+' L -7 '+end+' L -7 '+shoulder+' Q -6 '+(join+44)+' -4 '+(join-48)+' Z" fill="#454c51"/>';
-   svg+='<path d="M 4 '+(join-48)+' Q 6 '+(join+44)+' 7 '+shoulder+' L 7 '+end+' L '+eo+' '+end+' L '+eo+' '+shoulder+' C '+eo+' '+(shoulder-66)+' '+(lip-tx)+' '+(sy+ty)+' '+lip+' '+sy+' Z" fill="#454c51"/>';
-   // Kerb lines follow the outer boundary only; avoid painting a stroke across
-   // the roundabout interior where the arms overlap the circulating annulus.
-   svg+='<path d="'+leftEdge+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
-   svg+='<path d="'+rightEdge+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
    // Rounded splitter nose blends into a constant-width central reservation.
    svg+='<path d="M 0 '+(join+26)+' C -10 '+(join+44)+' -13 '+(join+90)+' -11 '+shoulder+' L -11 '+end+' L 11 '+end+' L 11 '+shoulder+' C 13 '+(join+90)+' 10 '+(join+44)+' 0 '+(join+26)+' Z" fill="#b8cda9" stroke="#edf0e8" stroke-width="2"/>';
    for(let i=1;i<a.in;i++)svg+=line(-ei+i*w,join+65,-ei+i*w,end,'#e3e8e9',2,'13 11');
@@ -361,12 +386,6 @@ function draw(){
      const a=q*Math.PI/2+gap,b=(q+1)*Math.PI/2-gap;
      if(a<b)svg+='<path d="M '+(r*Math.sin(a))+' '+(-r*Math.cos(a))+' A '+r+' '+r+' 0 0 1 '+(r*Math.sin(b))+' '+(-r*Math.cos(b))+'" fill="none" stroke="#e7eaeb" stroke-width="2" stroke-dasharray="14 12"/>';
    }
- }
- // The outer edge appears only between entry/exit mouths.
- for(let q=0;q<4;q++){
-   const gap=Math.asin(Math.min(.78,(Math.max(...Object.values(state.arms).map(a=>Math.max(a.in,a.out)))*w+14)/outer));
-   const a=q*Math.PI/2+gap,b=(q+1)*Math.PI/2-gap;
-   if(a<b)svg+='<path d="M '+(outer*Math.sin(a))+' '+(-outer*Math.cos(a))+' A '+outer+' '+outer+' 0 0 1 '+(outer*Math.sin(b))+' '+(-outer*Math.cos(b))+'" fill="none" stroke="#eef1ed" stroke-width="4"/>';
  }
  // The direction tangents are clockwise on the screen; keep them distinct
  // from the per-lane permitted movement arrows.
