@@ -2,7 +2,7 @@
 const fs=require('node:fs');
 const vm=require('node:vm');
 const assert=require('node:assert/strict');
-const html=fs.readFileSync('index.html','utf8');
+const html=require('./read_app').readAppSource();
 function extract(start,end){
  const a=html.indexOf(start),b=html.indexOf(end,a);
  assert(a>=0&&b>a,'Cannot extract '+start);
