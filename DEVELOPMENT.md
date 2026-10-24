@@ -67,3 +67,9 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Entry and exit vehicles remain static. Manual editing, JSON load and reset stop playback.
 - This is animation only: no gap acceptance, speed dynamics, priorities, collisions or lane changing. Playback speed is a UI control, not km/h.
 - Verify live UDA browser display and CI status after publishing.
+
+## V1.11 independent vehicle playback and proximity indicator
+- Vehicles A and B now each have a configurable circulating angular speed from 0 to 90 degrees per second. Their individual speed is multiplied by the global playback-speed setting divided by its default 20 degrees/sec.
+- Approximate same-lane separation is displayed in metres from the angular gap and lane-centre radius. Warning threshold is 8 m.
+- This is a geometric proximity indicator only. No collision prediction, vehicle length, relative closing velocity, merge conflicts, yielding or gap acceptance is simulated.
+- Updated static checks; validate live UDA display and Actions separately.
