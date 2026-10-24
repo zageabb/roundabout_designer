@@ -17,3 +17,10 @@
 - Identify potentially intersecting paths then assess temporal overlap; an illegal move or route intersection is not by itself a collision or legal fault. Keep assumptions explicit.
 - Split the single HTML into maintainable modules before scaling. Modular frontend development **does not imply server-side rendering or a mandatory backend**. Start with static build, use a browser Worker for measured CPU load, and add an optional authenticated Ubuntu API only for measured heavy runs, multi-user scenarios or persistent/scheduled workloads.
 - Maintain browser-only/offline operation and optional AI. Document schema versions, relative reverse-proxy paths, interoperability/engine-parity tests, and CI checks on every migration step.
+
+## Future scenario and AI optimisation rules
+- Distinguish individual vehicle noncompliance (`overrideExitRules`) from an official lane/junction-wide edit to the legal `RuleSet`. Route eligibility and user-facing warnings must reflect that difference.
+- Scenario comparisons require immutable baselines, consistent origin-destination demand, matched seeds/engine version and network-wide metrics. Never rank a design from fabricated traffic counts or from a single uncalibrated visual run.
+- Road/mapping import must preserve provenance and mark unknown lane markings, controls and turning counts for confirmation; an imported route graph must use the same core data model as manually drawn roads.
+- Optimisation must use independently testable numerical simulation and constraint validation. AI is an optional candidate proposer/explainer only; no silent scenario mutation, unsupported claim of capacity gain, or execution of unapproved roadway changes. Physical modifications require separate feasibility/cost/land/safety considerations.
+- Follow `TRAFFIC_OPTIMISATION_PLAN.md` only after base `INTERSECTION_CORE_PLAN.md` dependencies are met; preserve legacy roundabout user experience and offline operation.
