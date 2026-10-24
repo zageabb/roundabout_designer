@@ -17,12 +17,10 @@ jobs:
         run: node tests/check_routes.js
       - name: Test scenario replay and event monitor
         run: node tests/check_scenario.js
+      - name: Verify modular source order and browser assets
+        run: node tests/check_modules.js
       - name: Check browser JavaScript syntax
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          html=Path('index.html').read_text()
-          code=html.split('<script>',1)[1].split('</script>',1)[0]
-          Path('/tmp/roundabout.js').write_text(code)
-          PY
+          for file in src/*.js; do node --check "$file"; done
+          node -e "require('fs').writeFileSync('/tmp/roundabout.js',require('./tests/read_app').getJavaScript())"
           node --check /tmp/roundabout.js
