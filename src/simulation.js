@@ -1,6 +1,6 @@
 function allowedExitArms(v,config){
  const lanes=config.arms[v.arm],lane=Math.min(lanes.in,Math.max(1,Math.floor(v.entryLane||v.lane||1)));
- return [...new Set((lanes.moves[lane-1]||'S').split('').map(turn=>routeDestination(v.arm,turn)))];
+ return LaneNetwork.permittedExits(config,v.arm,lane);
 }
 // Legal routing remains the default. Explicitly enabling this flag makes
 // all four exits available (including returning to the entry arm) for
@@ -27,26 +27,14 @@ function crossesClockwiseAngle(before,step,target){
 // Different approach lanes going into distinct circular lanes can merge together.
 // Crossovers, same lane allocations, and identical starts are still serialized.
 function mergingPathsConflict(a,b){
- if(a.arm!==b.arm)return false;
- if(a.lane===b.lane || a.targetLane===b.targetLane)return true;
- return (a.lane-b.lane)*(a.targetLane-b.targetLane)<0;
+ return LaneNetwork.mergeRelationship(a,b).conflicts;
 }
 let playback=false,playbackFrame=null,previousFrame=null;
 let scenarioBaseline=null,runState=null;
+// The renderer and trail recorder now read exactly the same canonical pose.
 function vehicleWorldPosition(v,config){
- const w=config.width*config.displayScale,inner=config.diameter*3.1;
- const outer=inner+config.circulating*w,join=outer-18;
- if(v.side==='circulating'){
-  const r=inner+(config.circulating-v.lane+.5)*w,t=v.angle*Math.PI/180;
-  return [r*Math.sin(t),-r*Math.cos(t)];
- }
- const rot={South:0,West:90,North:180,East:270}[v.side==='exiting'?v.exitArm:v.arm]*Math.PI/180;
- let x,y;
- if(v.side==='merging'){const p=mergeGeometry(v,v.mergeProgress,config);x=p.x;y=p.y}
- else if(v.side==='exiting'){const p=exitGeometry(v,v.exitProgress,config);x=p.x;y=p.y}
- else if(v.side==='exit'){x=(v.lane-.5)*w;y=outer+142}
- else {x=-config.arms[v.arm].in*w+(v.lane-.5)*w;y=join+210-165*v.progress}
- return [x*Math.cos(rot)-y*Math.sin(rot),x*Math.sin(rot)+y*Math.cos(rot)];
+ const pose=LaneNetwork.sampleVehiclePose(config,v,{mergeGeometry,exitGeometry});
+ return [pose.x,pose.y];
 }
 function recordScenarioEvent(vehicle,event,detail){
  if(!runState)return;
