@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v0.9</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.0</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -14,7 +14,7 @@
 <div class="row"><label for="incoming">Entry lanes</label><input id="incoming" type="number" min="1" max="6"></div>
 <div class="row"><label for="outgoing">Exit lanes</label><input id="outgoing" type="number" min="1" max="6"></div>
 <p class="muted">Entry lanes numbered from the driver's left to right while approaching the junction.</p><div id="lanes"></div><div class="section"><h2>Permitted movements</h2><div id="connections" class="muted"></div><p id="networkNotice" class="muted"></p></div></div>
-<div class="section"><h2>Vehicles A & B</h2><p class="muted">Choose approach, entry/exit and lane.</p><div id="vehicles"></div></div><div class="section"><h2>Project</h2><div class="buttons">
+<div class="section"><h2>Vehicles A & B</h2><p class="muted">Choose approach, entry/exit and lane.</p><div id="vehicles"></div><div class="row"><label for="playSpeed">Playback speed (degrees/sec)</label><input id="playSpeed" type="number" min="1" max="90" step="5" value="20"></div><div class="buttons"><button id="playCars" class="primary">Play</button><button id="pauseCars">Pause</button><button id="stepCars">Step +5°</button></div><p class="muted">Playback moves circulating vehicles only. No traffic priority or collision model yet.</p></div><div class="section"><h2>Project</h2><div class="buttons">
 <button id="save" class="primary">Export SVG</button><button id="png">Export PNG</button><button id="json">Save JSON</button><button id="load">Load JSON</button><button id="reset">Reset defaults</button></div>
 <input id="file" type="file" accept=".json,application/json" hidden></div>
 <p class="warning">Concept-layout tool, not a certified road design. The schematic shows lane counts, directions, circulation and give-way lines. It does not validate swept paths, weaving distances, signage or DMRB design compliance.</p>
@@ -27,6 +27,7 @@ let state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,s
 let active='North';
 const defaultVehicles=()=>({A:{arm:'North',side:'entry',lane:1},B:{arm:'South',side:'exit',lane:1}});
 state.vehicles=defaultVehicles();
+let playback=false,playbackFrame=null,previousFrame=null;
 function normalizeVehicles(){
  if(!state.vehicles)state.vehicles=defaultVehicles();
  for(const id of ['A','B']){
@@ -38,6 +39,33 @@ function normalizeVehicles(){
  v.lane=Math.max(1,Math.min(limit,Math.floor(Number(v.lane)||1)));
  state.vehicles[id]=v;
  }
+}
+function stopPlayback(){
+ playback=false;previousFrame=null;
+ if(playbackFrame!==null)cancelAnimationFrame(playbackFrame);
+ playbackFrame=null;
+ const play=$('playCars');if(play)play.textContent='Play';
+}
+function advanceVehicles(delta){
+ for(const id of ['A','B']){
+ const v=state.vehicles[id];
+ if(v.side==='circulating')v.angle=(v.angle+delta+360)%360;
+ }
+ draw();
+ $('vehicles').querySelectorAll('input[data-field="angle"]').forEach(el=>{
+ const angle=state.vehicles[el.dataset.vehicle].angle;
+ el.value=Math.round(angle/5)*5%360;
+ const out=el.parentElement.querySelector('output');if(out)out.textContent=Math.round(angle)+'°';
+ });
+}
+function playbackTick(time){
+ if(!playback)return;
+ if(previousFrame!==null){
+ const dt=Math.min(0.1,Math.max(0,(time-previousFrame)/1000));
+ const speed=Math.max(1,Math.min(90,Number($('playSpeed').value)||20));
+ advanceVehicles(speed*dt);
+ }
+ previousFrame=time;playbackFrame=requestAnimationFrame(playbackTick);
 }
 function renderVehicles(){
  normalizeVehicles();
@@ -52,11 +80,11 @@ function renderVehicles(){
  const v=state.vehicles[el.dataset.vehicle];
  if(el.dataset.field==='side'&&el.value==='circulating'&&v.side!=='circulating')v.angle=45;
  v[el.dataset.field]=['lane','angle'].includes(el.dataset.field)?Number(el.value):el.value;
- normalizeVehicles();renderVehicles();draw();
- };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';draw()};});
+ stopPlayback();normalizeVehicles();renderVehicles();draw();
+ };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';stopPlayback();draw()};});
  $('vehicles').querySelectorAll('button[data-nudge]').forEach(btn=>btn.onclick=()=>{
  const v=state.vehicles[btn.dataset.vehicle];
- v.angle=(v.angle+Number(btn.dataset.nudge)+360)%360;
+ stopPlayback();v.angle=(v.angle+Number(btn.dataset.nudge)+360)%360;
  renderVehicles();draw();
  });
 }
@@ -120,6 +148,9 @@ $('laneNumbers').onchange=()=>{state.laneNumbers=$('laneNumbers').checked;draw()
 $('showRoutes').onchange=()=>{state.showRoutes=$('showRoutes').checked;draw()};
 inputValue('incoming',1,6,1,v=>{const a=state.arms[active];a.in=v;while(a.moves.length<v)a.moves.push('S');a.moves.length=v});
 inputValue('outgoing',1,6,1,v=>state.arms[active].out=v);
+$('playCars').onclick=()=>{if(playback)return;playback=true;previousFrame=null;$('playCars').textContent='Playing';playbackFrame=requestAnimationFrame(playbackTick)};
+$('pauseCars').onclick=stopPlayback;
+$('stepCars').onclick=()=>{stopPlayback();advanceVehicles(5)};
 function line(x1,y1,x2,y2,color,thick,dash=''){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="'+thick+'" '+(dash?'stroke-dasharray="'+dash+'"':'')+'/>'}
 function text(x,y,s,size=17,fill='#fff',anchor='middle'){return '<text x="'+x+'" y="'+y+'" fill="'+fill+'" font-size="'+size+'" font-weight="700" text-anchor="'+anchor+'" dominant-baseline="middle">'+s+'</text>'}
 // A single, shared-stem road arrow per inbound lane. Multiple movements branch
@@ -232,8 +263,8 @@ function download(name,content,type){const blob=new Blob([content],{type});const
 $('save').onclick=()=>download('roundabout.svg',$('diagram').outerHTML,'image/svg+xml');
 $('json').onclick=()=>download('roundabout.json',JSON.stringify(state,null,2),'application/json');
 $('png').onclick=()=>{const src=new XMLSerializer().serializeToString($('diagram'));const url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=2240;canvas.height=2240;canvas.getContext('2d').drawImage(img,0,0,2240,2240);canvas.toBlob(b=>{if(b){const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='roundabout.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}URL.revokeObjectURL(url)},'image/png')};img.onerror=()=>updateStatus('PNG export failed; SVG export remains available.');img.src=url};
-$('reset').onclick=()=>{state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,vehicles:defaultVehicles(),arms:structuredClone(presets)};active='North';renderControls();draw();updateStatus('Reset to the requested UK lane configuration.')};
+$('reset').onclick=()=>{stopPlayback();state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,vehicles:defaultVehicles(),arms:structuredClone(presets)};active='North';renderControls();draw();updateStatus('Reset to the requested UK lane configuration.')};
 $('load').onclick=()=>$('file').click();
-$('file').onchange=async e=>{try{const obj=JSON.parse(await e.target.files[0].text());if(!obj.arms||!['North','East','South','West'].every(x=>obj.arms[x]?.moves?.length===obj.arms[x]?.in))throw Error('Invalid approach data');if(validateNetwork(obj).length)throw Error(validateNetwork(obj).join('; '));state={circulating:clamp(+obj.circulating||3,1,5),diameter:clamp(+obj.diameter||38,12,85),width:clamp(+obj.width||4,2.5,5),displayScale:clamp(+obj.displayScale||9.5,8,14),laneNumbers:obj.laneNumbers!==false,showRoutes:obj.showRoutes===true,vehicles:obj.vehicles||defaultVehicles(),arms:obj.arms};renderControls();draw();updateStatus('Configuration loaded.')}catch(err){updateStatus('Could not import JSON: '+err.message)}e.target.value=''};
+$('file').onchange=async e=>{stopPlayback();try{const obj=JSON.parse(await e.target.files[0].text());if(!obj.arms||!['North','East','South','West'].every(x=>obj.arms[x]?.moves?.length===obj.arms[x]?.in))throw Error('Invalid approach data');if(validateNetwork(obj).length)throw Error(validateNetwork(obj).join('; '));state={circulating:clamp(+obj.circulating||3,1,5),diameter:clamp(+obj.diameter||38,12,85),width:clamp(+obj.width||4,2.5,5),displayScale:clamp(+obj.displayScale||9.5,8,14),laneNumbers:obj.laneNumbers!==false,showRoutes:obj.showRoutes===true,vehicles:obj.vehicles||defaultVehicles(),arms:obj.arms};renderControls();draw();updateStatus('Configuration loaded.')}catch(err){updateStatus('Could not import JSON: '+err.message)}e.target.value=''};
 renderControls();draw();
 </script></body></html>
