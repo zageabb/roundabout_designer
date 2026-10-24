@@ -2,18 +2,18 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v0.4</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v0.5</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
 <div class="row"><label for="width">Lane width (m)</label><input id="width" type="number" min="2.5" max="5" step=".1" value="4.0"></div>
 <div class="row"><label for="displayScale">Drawing spacing</label><input id="displayScale" type="number" min="8" max="14" step=".5" value="9.5"></div>
-<div class="row"><label for="laneNumbers">Show lane numbers</label><input id="laneNumbers" type="checkbox" checked style="width:20px;height:20px"></div>
+<div class="row"><label for="showRoutes">Show route connections</label><input id="showRoutes" type="checkbox" style="width:20px;height:20px"></div><div class="row"><label for="laneNumbers">Show lane numbers</label><input id="laneNumbers" type="checkbox" checked style="width:20px;height:20px"></div>
 <p class="muted">UK left-hand traffic. Vehicles enter on the left side of each approach and travel clockwise around the island.</p>
 <div class="section"><h2>Approach configuration</h2><div class="tabs" id="tabs"></div>
 <div class="row"><label for="incoming">Entry lanes</label><input id="incoming" type="number" min="1" max="6"></div>
 <div class="row"><label for="outgoing">Exit lanes</label><input id="outgoing" type="number" min="1" max="6"></div>
-<p class="muted">Entry lanes numbered from the driver's left to right while approaching the junction.</p><div id="lanes"></div></div>
+<p class="muted">Entry lanes numbered from the driver's left to right while approaching the junction.</p><div id="lanes"></div><div class="section"><h2>Permitted movements</h2><div id="connections" class="muted"></div></div></div>
 <div class="section"><h2>Project</h2><div class="buttons">
 <button id="save" class="primary">Export SVG</button><button id="png">Export PNG</button><button id="json">Save JSON</button><button id="load">Load JSON</button><button id="reset">Reset defaults</button></div>
 <input id="file" type="file" accept=".json,application/json" hidden></div>
@@ -23,18 +23,33 @@
 const presets={North:{in:3,out:2,moves:['LS','S','R']},East:{in:3,out:2,moves:['L','LS','SR']},South:{in:4,out:2,moves:['L','LS','S','R']},West:{in:3,out:2,moves:['LS','S','R']}};
 const moves=['L','S','R','LS','SR','LR','LSR'];
 const labels={L:'Left only',S:'Straight only',R:'Right only',LS:'Left + straight',SR:'Straight + right',LR:'Left + right',LSR:'Left + straight + right'};
-let state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,arms:structuredClone(presets)};
+let state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,arms:structuredClone(presets)};
 let active='North';
 const $=x=>document.getElementById(x);
 function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
 function updateStatus(t){$('status').textContent=t}
 function renderControls(){
- $('circulating').value=state.circulating;$('diameter').value=state.diameter;$('width').value=state.width;$('displayScale').value=state.displayScale;$('laneNumbers').checked=state.laneNumbers;
+ $('circulating').value=state.circulating;$('diameter').value=state.diameter;$('width').value=state.width;$('displayScale').value=state.displayScale;$('laneNumbers').checked=state.laneNumbers;$('showRoutes').checked=state.showRoutes;
  $('tabs').innerHTML=Object.keys(state.arms).map(d=>'<button class="'+(d===active?'on':'')+'" data-arm="'+d+'">'+d+'</button>').join('');
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.arm;renderControls()});
  const a=state.arms[active];$('incoming').value=a.in;$('outgoing').value=a.out;
  $('lanes').innerHTML=a.moves.map((m,i)=>'<div class="lane"><label>Lane '+(i+1)+'</label><select data-lane="'+i+'">'+moves.map(x=>'<option value="'+x+'"'+(x===m?' selected':'')+'>'+labels[x]+'</option>').join('')+'</select></div>').join('');
- $('lanes').querySelectorAll('select').forEach(s=>s.onchange=()=>{a.moves[+s.dataset.lane]=s.value;draw()});
+ $('lanes').querySelectorAll('select').forEach(s=>s.onchange=()=>{a.moves[+s.dataset.lane]=s.value;draw();renderConnectivity()});renderConnectivity();
+}
+function routeDestination(origin,movement){
+ const directions=['North','East','South','West'];
+ const delta={L:1,S:2,R:3}[movement];
+ return directions[(directions.indexOf(origin)+delta)%4];
+}
+function deriveConnections(config){
+ return Object.entries(config.arms).flatMap(([origin,arm])=>arm.moves.flatMap((rule,index)=>
+   rule.split('').filter(m=>['L','S','R'].includes(m)).map(movement=>({
+     origin,lane:index+1,movement,destination:routeDestination(origin,movement)
+   }))));
+}
+function renderConnectivity(){
+ const connections=deriveConnections(state).filter(item=>item.origin===active);
+ $('connections').textContent=connections.map(c=>'Lane '+c.lane+' · '+labels[c.movement]+' → '+c.destination).join(' | ');
 }
 function inputValue(id,min,max,step,cb){$(id).addEventListener('change',()=>{const v=clamp(Number($(id).value)||min,min,max);cb(step?Math.round(v/step)*step:v);renderControls();draw()})}
 inputValue('circulating',1,5,1,v=>state.circulating=v);
@@ -42,6 +57,7 @@ inputValue('diameter',12,85,1,v=>state.diameter=v);
 inputValue('width',2.5,5,.1,v=>state.width=v);
 inputValue('displayScale',8,14,.5,v=>state.displayScale=v);
 $('laneNumbers').onchange=()=>{state.laneNumbers=$('laneNumbers').checked;draw()};
+$('showRoutes').onchange=()=>{state.showRoutes=$('showRoutes').checked;draw()};
 inputValue('incoming',1,6,1,v=>{const a=state.arms[active];a.in=v;while(a.moves.length<v)a.moves.push('S');a.moves.length=v});
 inputValue('outgoing',1,6,1,v=>state.arms[active].out=v);
 function line(x1,y1,x2,y2,color,thick,dash=''){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="'+thick+'" '+(dash?'stroke-dasharray="'+dash+'"':'')+'/>'}
@@ -92,6 +108,16 @@ function draw(){
    }
    svg+='</g>';
  }
+ // Route lines show movement connectivity, NOT exact vehicle swept paths.
+ if(state.showRoutes){
+   const anchors={North:[0,-1],East:[1,0],South:[0,1],West:[-1,0]};
+   const visible=deriveConnections(state).filter(item=>item.origin===active);
+   for(const item of visible){
+     const p=anchors[item.origin],q=anchors[item.destination],r=outer+28;
+     const x=p[0]*r,y=p[1]*r,u=q[0]*r,v=q[1]*r;
+     svg+='<path d="M '+x+' '+y+' Q 0 0 '+u+' '+v+'" fill="none" stroke="#65e4f5" stroke-opacity=".45" stroke-width="3" stroke-dasharray="9 8"/>';
+   }
+ }
  // Curbed central island, not a solid ring covering the entries.
  svg+='<circle r="'+inner+'" fill="#8aaa7e" stroke="#d8dfd3" stroke-width="8"/>';
  for(let k=1;k<state.circulating;k++){
@@ -130,6 +156,6 @@ $('json').onclick=()=>download('roundabout.json',JSON.stringify(state,null,2),'a
 $('png').onclick=()=>{const src=new XMLSerializer().serializeToString($('diagram'));const url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=2240;canvas.height=2240;canvas.getContext('2d').drawImage(img,0,0,2240,2240);canvas.toBlob(b=>{if(b){const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='roundabout.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}URL.revokeObjectURL(url)},'image/png')};img.onerror=()=>updateStatus('PNG export failed; SVG export remains available.');img.src=url};
 $('reset').onclick=()=>{state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,arms:structuredClone(presets)};active='North';renderControls();draw();updateStatus('Reset to the requested UK lane configuration.')};
 $('load').onclick=()=>$('file').click();
-$('file').onchange=async e=>{try{const obj=JSON.parse(await e.target.files[0].text());if(!obj.arms||!['North','East','South','West'].every(x=>obj.arms[x]?.moves?.length===obj.arms[x]?.in))throw Error('Invalid approach data');state={circulating:clamp(+obj.circulating||3,1,5),diameter:clamp(+obj.diameter||38,12,85),width:clamp(+obj.width||4,2.5,5),displayScale:clamp(+obj.displayScale||9.5,8,14),laneNumbers:obj.laneNumbers!==false,arms:obj.arms};renderControls();draw();updateStatus('Configuration loaded.')}catch(err){updateStatus('Could not import JSON: '+err.message)}e.target.value=''};
+$('file').onchange=async e=>{try{const obj=JSON.parse(await e.target.files[0].text());if(!obj.arms||!['North','East','South','West'].every(x=>obj.arms[x]?.moves?.length===obj.arms[x]?.in))throw Error('Invalid approach data');state={circulating:clamp(+obj.circulating||3,1,5),diameter:clamp(+obj.diameter||38,12,85),width:clamp(+obj.width||4,2.5,5),displayScale:clamp(+obj.displayScale||9.5,8,14),laneNumbers:obj.laneNumbers!==false,showRoutes:obj.showRoutes===true,arms:obj.arms};renderControls();draw();updateStatus('Configuration loaded.')}catch(err){updateStatus('Could not import JSON: '+err.message)}e.target.value=''};
 renderControls();draw();
 </script></body></html>
