@@ -1,13 +1,13 @@
 # Development
 
 ## Status
-Version 0.1: single-file static proof of concept committed to main.
+V1.26: working two-vehicle roundabout simulator with continuous road outline, independently selectable/overridden exits, replay, SVG/PNG/JSON exports, event CSV, and executable CI. The next agreed development milestones concern junction-independent graph, conflict analysis, and modular code extraction.
 
 ## Design architecture
 - `index.html`: responsive vanilla JS UI, immutable defaults, state, SVG renderer and client-side exports.
 - No backend/database/authentication.
 - Settings serialisable to JSON.
-- Next iteration: split rendering, geometry, validation and UI into independent TypeScript modules with automated tests.
+- Next iteration: incrementally extract geometry, validation, lane graph, deterministic vehicle engine, collision-candidate analysis, rendering and UI from the single HTML file into tested JavaScript/TypeScript modules. Keep a static browser distribution; introduce a Web Worker for measured heavy CPU work, with an optional Ubuntu API only when needed. See `INTERSECTION_CORE_PLAN.md`.
 
 ## Acceptance criteria
 - UK/left driving: inward road half is the left side in the travel direction.
@@ -19,10 +19,10 @@ Version 0.1: single-file static proof of concept committed to main.
 - JSON load rejects malformed data; strengthen detailed per-field validation in next iteration.
 
 ## Known limitations
-This first milestone is a functional diagram editor, not a finished true-to-life CAD road layout. Curvature transitions, spiral lines, realistic splitter shaping and lane continuity are next milestones. Browser tests and CI have not yet been configured or executed.
+The current app is a working visual simulator, not a surveyed/validated engineering model. Geometric lane continuity, meaningful swept vehicle envelopes, richer conflict detection, priority control, and scalable traffic volume simulation remain incomplete. Browser-based graphical verification is still needed; CI already checks geometry, trajectories, routes, replay and JavaScript syntax.
 
-## Planned CI
-Add tests for left-side orientation, clockwise flow, all arm lane movements, min/max circulating settings, JSON round trip and snapshot SVG generation.
+## Existing CI and next verification
+GitHub Actions currently checks layout, shared road geometry, entry-merge trajectories, exits, legal/overridden routes, scenario replay and JavaScript syntax. Extend with junction-graph consistency, deterministic fixed-step results, conflict-zone tests, scenario format migration, UI/browser visual tests, and performance budgets.
 
 ## Simulation-oriented design decision (24 Oct 2026)
 The long-term purpose is vehicle-volume simulation with optional AI analysis. Keep geometry, lane connectivity, demand, simulation, rendering and AI interface as separate modules. See `SIMULATION_ARCHITECTURE.md`. Ubuntu UDA deployment preparation is in `deploy/README.md`, but live server configuration remains unverified.
@@ -136,3 +136,13 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - **Export events CSV** produces a quoted CSV with event timestamps, car identifiers and descriptions; live telemetry is not part of saved JSON configurations.
 - Added executable `tests/check_scenario.js`, exercising trail points, status changes, wait accounting, replay determinism and off-rule exit persistence. This test is included in CI.
 - **Limitations:** two-vehicle demonstrator, no calibrated physical vehicle speed or waiting-time prediction, path-trail rendering is only a visual aid, and observed visual proximity is not an accident determination. A larger deterministic traffic-flow/queue engine remains future development.
+
+## Next agreed roadmap: common intersection core + improved vehicle conflict analysis
+- **Architectural decision:** roundabout = directed curved road segments + four entry merges + four exit diverges. Reuse these primitives for priority T-junctions; add opposing traffic and crossing conflicts where appropriate. Avoid separate engines for every junction shape.
+- **Extract before expanding:** move the current single-file HTML/CSS/JS implementation incrementally into a static, maintainable module structure while preserving all V1.26 behaviours, CI and UDA deployment. Frontend modularisation does not require server-side rendering or simulation.
+- **Shared lane graph:** introduce stable road/lane/connector/node IDs, continuous vehicle trajectories as distance-parametrised paths, and independent give-way/stop/signal rules. The rendered SVG and collision tests must use the same path source.
+- **Conflict analysis:** begin with spatial intersecting/swept-path candidates, then compare occupancy *times*, speeds, sizes, priority and gap decisions. Distinguish permitted merges, rule violations, near conflicts and possible occupancy overlap; never infer a confirmed collision or legal fault solely from a lane violation.
+- **Validation case:** after roundabout entry/exit behaviour is refactored into reusable merge/diverge rules, build a basic priority T-junction using the same engine and test its additional crossing conflicts.
+- **Scaling decision:** small simulations run client-side; use Web Workers when UI responsiveness/vehicle counts justify it. Consider an optional Ubuntu Node service/API for batch/large simulations, shared scenarios and persistence only when benchmarks or requirements warrant it. Keep offline/static mode usable and make AI optional.
+- **Acceptance gates:** unchanged East lane 1 left/straight + lane 2 straight behaviour, lane 1/2 simultaneous noncrossing merges, unsafe East lane 2→South override, route replay/trails/events, scenario import/export, stable numerical results, and green CI at every incremental refactor.
+- **Detailed order, proposed schemas, frontend/worker/server split, and tests:** [INTERSECTION_CORE_PLAN.md](INTERSECTION_CORE_PLAN.md). Do not implement a monolithic rewrite or deploy an unauthenticated API.
