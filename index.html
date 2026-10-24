@@ -59,7 +59,7 @@ function draw(){
  let svg='<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1120" role="img" aria-label="UK clockwise roundabout with configurable lanes"><rect width="1120" height="1120" fill="#e9f2e5"/>';
  svg+='<g transform="translate('+c+' '+c+')">';
  // Rotated road arms: South is the canonical arm. Its entry is on the west (left).
- for(const [name,rot] of [['South',0],['West',90],['North',180],['East',270]]){
+ for(const [name,rot] of [['South',0],['East',90],['North',180],['West',270]]){
   const a=state.arms[name], ei=a.in*w, eo=a.out*w;
   svg+='<g transform="rotate('+rot+')">';
   // Outbound carriageway lies right of the splitter when viewed from the south.
@@ -80,7 +80,6 @@ function draw(){
    svg+=line(x,start+145,x,start+175,'#fff',3);
    svg+='<path d="M '+(x-5)+' '+(start+167)+' L '+x+' '+(start+178)+' L '+(x+5)+' '+(start+167)+'" fill="none" stroke="white" stroke-width="3"/>';
   }
-  svg+=text(0, end+29, name.toUpperCase(),22,'#154968');
   svg+='</g>';
  }
  // roundabout annulus: render above approach ends.
@@ -103,9 +102,14 @@ function draw(){
  }
  svg+=text(0,-18,'UK',26,'#234c36');svg+=text(0,13,N+' circulating lanes',14,'#234c36');
  // Give-way lines, on approach side of each arm, in front of roundabout.
- for(const [name,rot] of [['South',0],['West',90],['North',180],['East',270]]){
+ for(const [name,rot] of [['South',0],['East',90],['North',180],['West',270]]){
   const a=state.arms[name], ei=a.in*w;
   svg+='<g transform="rotate('+rot+')">'+line(-ei,outer+7,-8,outer+7,'#fff',4,'11 7')+'</g>';
+ }
+ 
+ // Labels belong to the map, not to a rotated arm group: always horizontal.
+ for(const [name,x,y] of [['North',0,-528],['South',0,528],['East',528,0],['West',-528,0]]){
+   svg+=text(x,y,name.toUpperCase(),20,'#154968');
  }
  svg+='</g></svg>';
  $('view').innerHTML=svg;
