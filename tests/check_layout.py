@@ -67,4 +67,8 @@ assert "function playbackTick(time)" in html
 assert "requestAnimationFrame(playbackTick)" in html
 assert "if(v.side==='circulating')" in html
 assert 'id="playCars"' in html and 'id="pauseCars"' in html and 'id="stepCars"' in html
-print("UK layout, vehicle placement and circulating playback controls checked.")
+assert "function proximityWarning()" in html
+assert "v.speed/20" in html
+assert 'data-field="speed"' in html
+assert "gap<8" in html
+print("UK layout, playback, independent speeds and proximity checks passed.")
