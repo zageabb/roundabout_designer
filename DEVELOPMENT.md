@@ -54,3 +54,9 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Vehicle positions follow SVG arm geometry and are clamped when a configured lane disappears.
 - A/B positions are persisted in JSON and reset with defaults.
 - These are static positioning markers; no vehicle motion, interaction or collision logic yet.
+
+## V1.8 static circulating vehicle placement
+- Vehicles A/B now support `circulating` in addition to entry and exit placement.
+- Circulating position uses an outer-to-inner lane index (1 is outermost) and angle clockwise from North (0–359 degrees).
+- SVG positions and vehicle headings follow circular geometry and clockwise movement; no actual vehicle motion/priority logic yet.
+- The arm dropdown is disabled when placing a vehicle in the circular carriageway. Vehicle positions persist in JSON.
