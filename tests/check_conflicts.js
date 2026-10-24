@@ -42,7 +42,7 @@ const functions=[
  extract('function exitGeometry(v,progress,config){','function advanceVehicles('),
  extract('function exitSweep(destination,config){','function crossesClockwiseAngle(')
 ].join('\n');
-const {roadSurfaceGeometry,mergeGeometry,exitGeometry,circularExitStart}=vm.runInNewContext(functions+'\n;({roadSurfaceGeometry,mergeGeometry,exitGeometry,circularExitStart});');
+const {roadSurfaceGeometry,mergeGeometry,exitGeometry,circularExitStart}=vm.runInNewContext(functions+'\n;({roadSurfaceGeometry,mergeGeometry,exitGeometry,circularExitStart});',{entryAngles:{North:0,East:90,South:180,West:270}});
 const geometry={roadSurfaceGeometry,mergeGeometry,exitGeometry,circularExitStart,sampleVehiclePose:lane.sampleVehiclePose};
 const cfg={width:4,displayScale:9.5,diameter:38,circulating:3,arms:{
  North:{in:3,out:2,moves:['LS','S','R']},
