@@ -9,6 +9,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate default layout
         run: python3 tests/check_layout.py
+      - name: Validate shared lane-network and vehicle pose contracts
+        run: node tests/check_network.js
       - name: Exercise road geometry
         run: node tests/check_geometry.js
       - name: Check smooth vehicle merge trajectories
