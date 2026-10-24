@@ -96,11 +96,11 @@ assert "const r=outer-(v.targetLane-.5)*w" in html
 assert "Circulating destination lane" in html
 assert "Number(v.targetLane??v.lane)" in html
 assert "v.targetLane=Math.min(state.circulating,Number(el.value))" in html
-assert "const shoulder=join+profile.shoulderLift" in html
-assert "North:{sweep:.17,tangent:95,shoulderLift:150}" in html
-assert "West:{sweep:.17,tangent:95,shoulderLift:150}" in html
-assert "East:{sweep:.22,tangent:75,shoulderLift:122}" in html
-assert "Rounded splitter nose blends" in html
-assert "const leftEdge=" in html and "const rightEdge=" in html
-assert "outer*Math.sin(sweep)" in html
-print("Rounded approach mouths, splitter islands and merge controls checked.")
+assert "function roadSurfaceGeometry(config,outer,end)" in html
+assert "const road=roadSurfaceGeometry(state,outer,end)" in html
+assert "surface.push('A '+outer+" in html
+assert "const dx=Math.max(0,Math.min((lip-width)*.72,56))" in html
+assert 'road.surface' in html and 'road.kerbs' in html
+assert "const armJoinProfile" not in html
+assert "outer*Math.sin(sweep)" not in html
+print("Continuous road boundary and simulation controls checked.")
