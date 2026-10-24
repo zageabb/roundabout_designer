@@ -1,5 +1,9 @@
 # Traffic simulation and AI integration — architecture direction
 
+## Foundational decision: AI is optional
+
+The application MUST be fully usable offline and without any model provider. Road construction, lane connections, traffic demand configuration, numerical simulation, vehicle animation, metrics, experiment comparison, import/export and reports are all non-AI features. An AI adapter may only propose scenarios and interpret already-computed results. Disabling or removing that adapter must not change simulation results or break any other feature. No AI API calls from the base application.
+
 ## Principle
 
 Road geometry, lane connectivity, traffic demand and vehicle dynamics MUST be distinct from SVG rendering. AI may generate scenarios and interpret outputs; it must not be the numerical engine for traffic flow.
