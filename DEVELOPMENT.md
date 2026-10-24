@@ -73,3 +73,9 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Approximate same-lane separation is displayed in metres from the angular gap and lane-centre radius. Warning threshold is 8 m.
 - This is a geometric proximity indicator only. No collision prediction, vehicle length, relative closing velocity, merge conflicts, yielding or gap acceptance is simulated.
 - Updated static checks; validate live UDA display and Actions separately.
+
+## V1.13 relative vehicle movement assessment
+- For A and B in the same circulating lane, compare their clockwise forward headways and individual angular speeds.
+- Report approximate nearest spacing and a constant-speed catch-up time for the faster following car.
+- Explicitly label this as a geometric estimate; it does not account for braking, merges, vehicle lengths, changes in acceleration or collision prediction.
+- No automatic vehicle stopping or control decisions.
