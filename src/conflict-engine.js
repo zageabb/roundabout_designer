@@ -60,8 +60,12 @@ const ConflictEngine=(()=>{
   let simultaneous=null;
   if(start<=end){
    const count=Math.max(1,Math.ceil((end-start)/step));
-   for(let i=0;i<=count;i++){
-    const time=start+(end-start)*i/count;
+   // Include original sample timestamps as well as the uniform time grid so
+   // true simultaneous crossings at sample boundaries are not missed.
+   const times=new Set();
+   for(let i=0;i<=count;i++)times.add(start+(end-start)*i/count);
+   for(const p of [...pathA,...pathB])if(p.t>=start&&p.t<=end)times.add(p.t);
+   for(const time of times){
     const a=interpolate(pathA,time),b=interpolate(pathB,time),distance=Math.hypot(a.x-b.x,a.y-b.y);
     if(!simultaneous||distance<simultaneous.distance){
      simultaneous={distance,time,point:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}};
