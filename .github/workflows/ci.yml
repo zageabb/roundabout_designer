@@ -13,6 +13,8 @@ jobs:
         run: node tests/check_geometry.js
       - name: Check smooth vehicle merge trajectories
         run: node tests/check_merge.js
+      - name: Exercise vehicle routes and exits
+        run: node tests/check_routes.js
       - name: Check browser JavaScript syntax
         run: |
           python3 - <<'PY'
