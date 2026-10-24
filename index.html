@@ -81,7 +81,7 @@ function draw(){
  // clockwise curved travel direction tangents (screen coordinates: clockwise)
  for(let angle=20;angle<360;angle+=45){
   const rad=angle*Math.PI/180,r=inner+w*Math.max(.5,(N-.5)/2),x=r*Math.sin(rad),y=-r*Math.cos(rad),a=angle*Math.PI/180;
-  svg+='<g transform="translate('+x+' '+y+') rotate('+angle+')">'+line(0,-10,0,12,'#fff',3)+'<path d="M -7 5 L 0 15 L 7 5" fill="none" stroke="#fff" stroke-width="3"/></g>';
+  svg+='<g transform="translate('+x+' '+y+') rotate('+(angle-90)+')">'+line(0,-10,0,12,'#fff',3)+'<path d="M -7 5 L 0 15 L 7 5" fill="none" stroke="#fff" stroke-width="3"/></g>';
  }
  svg+=text(0,-18,'UK',26,'#234c36');svg+=text(0,13,N+' circulating lanes',14,'#234c36');
  // Give-way lines, on approach side of each arm, in front of roundabout.
