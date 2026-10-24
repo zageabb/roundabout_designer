@@ -49,3 +49,20 @@ Road geometry, lane connectivity, traffic demand and vehicle dynamics MUST be di
 ## Accuracy and safety
 
 Not a traffic engineering certification tool. Any predictive output should show model assumptions, simulation seed, calibration data, demand coverage and limitations. Do not label guessed traffic counts as observations.
+
+## Approved cross-junction and hybrid-compute architecture (24 October 2026)
+
+The roundabout is composed of four **one-way curved segments**, four priority entry **merge** nodes, and four exit **diverge** nodes. Its entry behaves like the joining branch of a one-way T-junction. A normal T-junction must also model opposing traffic, through movements, turn-across-traffic **crossings** and different priority decisions. All junction templates must reuse the same directed lane graph, lane connectors, path motion, conflict-zone engine, telemetry, replay and scenario contracts.
+
+**Shared traffic primitives:** `RoadSegment`, `Lane`, `LaneConnector`, `JunctionNode` (merge/diverge/crossing/continuation), `TrafficControl` (give way/stop/signal), `RoutePath`, `ConflictZone`, `VehicleState`, `Scenario` and `SimulationResult`. Do not hard-code a roundabout angle or cardinal road arm in the shared simulation engine. Rendering must sample the same paths as vehicle motion and conflict analysis.
+
+**Improved conflict analysis:** first identify geometric trajectory intersections and potentially overlapping swept vehicle envelopes; then determine whether occupancy **times** overlap. Add priority/rule compliance and safe-vs-unrestricted decisions as separate layers. Allow independent parallel merges, test illegal-turn crossovers, log interpretable possible conflicts and wait/near-conflict events without asserting an actual collision or responsibility for an accident. Protect against false positives when cars pass the same place at different times.
+
+**Where the code should run:**
+1. Keep editor/UI, drawing and animation on the browser main thread with separated source modules and a static deployable build. Removing the large inline JavaScript does **not** require a backend.
+2. When traffic demand makes numerical stepping expensive, move the deterministic engine into a browser Web Worker; exchange versioned scenario snapshots and result/telemetry messages. Continue to support fully offline operation.
+3. Optionally deploy a secured, resource-limited Ubuntu service for large or batch runs, scheduled jobs, saved/shared scenarios, and multi-user access. Prefer reusing the same JS/TS engine in the server runtime to avoid divergent physics. Keep the static-client engine as a fallback; no hard backend or AI dependency. Document relative reverse-proxy prefixes and authentication before deployment.
+
+**Milestone order:** (1) protect V1.26 regression suite; (2) incrementally extract pure geometry/model/simulation/render/UI modules; (3) unify vehicle paths; (4) generic priority merge and exit diverge; (5) temporal vehicle conflict zones; (6) validate reuse with a priority T-junction; (7) multiple-vehicle deterministic runs; (8) browser Worker/performance benchmarks; (9) evaluate optional server/API only against actual scale or collaboration needs.
+
+Full development contract: [INTERSECTION_CORE_PLAN.md](INTERSECTION_CORE_PLAN.md).
