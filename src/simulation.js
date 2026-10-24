@@ -110,7 +110,7 @@ function normalizeVehicles(){
  v.mergeProgress=Math.max(0,Math.min(1,Number(v.mergeProgress)||0));
  v.exitProgress=Math.max(0,Math.min(1,Number(v.exitProgress)||0));
  v.overrideExitRules=v.overrideExitRules===true;
- if(v.side==='entry')v.entryLane=v.lane;
+ if(v.side==='entry')v.entryLane=Math.max(1,Math.min(state.arms[v.arm].in,Math.floor(Number(v.lane)||1)));
  else v.entryLane=Math.max(1,Math.min(state.arms[v.arm].in,Math.floor(Number(v.entryLane)||v.lane||1)));
  const destinations=selectableExitArms(v,state);
  if(v.exitArm===undefined)v.exitArm=v.side==='circulating'?'none':allowedExitArms(v,state)[0];
