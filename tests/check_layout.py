@@ -96,7 +96,10 @@ assert "const r=outer-(v.targetLane-.5)*w" in html
 assert "Circulating destination lane" in html
 assert "Number(v.targetLane??v.lane)" in html
 assert "v.targetLane=Math.min(state.circulating,Number(el.value))" in html
-assert "const shoulder=join+122, sweep=Math.PI*.22" in html
+assert "const shoulder=join+profile.shoulderLift" in html
+assert "North:{sweep:.17,tangent:95,shoulderLift:150}" in html
+assert "West:{sweep:.17,tangent:95,shoulderLift:150}" in html
+assert "East:{sweep:.22,tangent:75,shoulderLift:122}" in html
 assert "Rounded splitter nose blends" in html
 assert "const leftEdge=" in html and "const rightEdge=" in html
 assert "outer*Math.sin(sweep)" in html
