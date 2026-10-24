@@ -49,4 +49,9 @@ assert "function provisionalLaneMapping(config)" in html
 assert "function validateNetwork(config)" in html
 assert "circulatingLane:entry,exitLane:exit,status:'provisional'" in html
 assert "Provisional mapping only" in html
-print("UK lane layout, 18 turning connections and provisional lane mapping checked.")
+assert "function normalizeVehicles()" in html
+assert "function renderVehicles()" in html
+assert "defaultVehicles()" in html
+assert "vehicles:obj.vehicles||defaultVehicles()" in html
+assert "v.side==='entry'?'in':'out'" in html
+print("UK lane layout, routes and vehicle A/B placement checks passed.")
