@@ -95,3 +95,10 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - This is a two-vehicle, schematic demonstrator rather than junction-engineering-valid yielding: no acceleration profiles, route-based lane selection, swept-path geometry, queueing multiple entry vehicles, or calibrated time gaps.
 
 - Entry-to-circulatory heading correction: join angles are North 45°, East 135°, South 225°, West 315°, used consistently for give-way proximity and initial circulating position. This removes radial-axis snapping (East 90°). A true lane-centreline interpolation/turn arc remains future work; these positions are an approximation.
+
+## V1.17 continuous multi-lane entry merges
+- The entry-to-circulating transition now uses a cubic Bézier curve instead of teleporting from give-way to the circular lane.
+- Entry vehicles have an independently selectable target circulating lane (1 to configured maximum), saved in JSON.
+- Curved merge endpoints and tangents align with the selected circulating lane and compass bearing.
+- Safe mode checks approaching/nearby traffic on the target and all crossed outer lanes before starting; unrestricted mode can bypass this preliminary rule for future unsafe-driving scenarios.
+- The prototype still lacks continuous swept-path collision checks, merging conflicts between different entries, realistic lane changes, and physical acceleration; don't treat safe mode as a guarantee of no collisions.
