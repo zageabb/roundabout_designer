@@ -72,23 +72,11 @@ function draw(){
    if(coords.length>1)svg+='<polyline points="'+coords.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ')+'" fill="none" stroke="'+(id==='A'?'#f5ba43':'#4bb9f3')+'" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity=".88"/>';
   }
  }
- const orientation={South:0,West:90,North:180,East:270};
  for(const id of ['A','B']){
  const v=state.vehicles[id];
- const n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
- const x=v.side==='entry'||v.side==='merging'?-n*w+(v.lane-.5)*w:(v.lane-.5)*w;
- const y=v.side==='exit'?outer+142:join+(v.side==='entry'?210-165*v.progress:210),angle=orientation[v.side==='exiting'?v.exitArm:v.arm],fill=id==='A'?'#f5ba43':'#4bb9f3';
- // Circulating lane 1 is outermost; all vehicle headings follow UK clockwise flow.
- const radius=inner+(state.circulating-v.lane+.5)*w,theta=v.angle*Math.PI/180;
- const curve=v.side==='merging'?mergeGeometry(v,v.mergeProgress,state):null;
- const exitCurve=v.side==='exiting'?exitGeometry(v,v.exitProgress,state):null;
- const placement=v.side==='circulating'
- ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+(v.angle+90)+')'
- :v.side==='merging'
- ?'rotate('+angle+') translate('+curve.x+' '+curve.y+') rotate('+curve.heading+')'
- :v.side==='exiting'
- ?'rotate('+angle+') translate('+exitCurve.x+' '+exitCurve.y+') rotate('+exitCurve.heading+')'
- :'rotate('+angle+') translate('+x+' '+y+')'+(v.side==='exit'?' rotate(180)':'');
+ const pose=LaneNetwork.sampleVehiclePose(state,v,{mergeGeometry,exitGeometry});
+ const fill=id==='A'?'#f5ba43':'#4bb9f3';
+ const placement='translate('+pose.x+' '+pose.y+') rotate('+pose.heading+')';
  svg+='<g transform="'+placement+'">';
  svg+='<rect x="-13" y="-20" width="26" height="40" rx="7" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
  svg+='<rect x="-9" y="-10" width="18" height="12" rx="3" fill="#dceef5" stroke="#19354b"/>';
