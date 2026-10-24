@@ -7,6 +7,7 @@ const funcs=[
  section('function routeDestination(origin,movement){','function deriveConnections('),
  section('function allowedExitArms(v,config){','function normalizeVehicles(){'),
  section('function normalizeVehicles(){','function stopPlayback(){'),
+ section('function mergeGeometry(v,progress,config){','function entryGapClear('),
  section('function entryGapClear(id){','function playbackTick(time){'),
  section('function roadSurfaceGeometry(config,outer,end){','function draw(){')
 ].join('\n');
