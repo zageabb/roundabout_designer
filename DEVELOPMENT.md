@@ -109,3 +109,13 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - The circulating handoff angle is calculated from the actual merge endpoint rather than a fixed 30-degree assumption. Vehicle heading remains tangent to clockwise circulation.
 - CI runs `tests/check_merge.js` to exercise all standard entry lanes on all four arms, lane-radius continuity, heading continuity, and an explicit East lane-1 to lane-2 override.
 - The path is still schematic; it does not model individual vehicle swept areas, conflict-free crossing of intermediate circulating lanes, or realistic speed/steering limits.
+
+## V1.24 vehicle exit planning and independent parallel merges
+- Vehicle configuration now appears below the main road drawing, with A/B cards side by side when screen width permits. Play/Pause remain above the drawing.
+- Entry vehicles offer a selectable exit destination derived from their own permitted turn arrows: East lane 1 -> South or West, East lane 2 -> West only, East lane 3 -> West or North.
+- Drivers can opt to Keep circulating, or select an available destination and exit lane. Destination and exit lane persist within vehicle JSON.
+- Vehicle motion includes a new curved `exiting` state, triggered when the circulating vehicle reaches its chosen road mouth. Its starting bearing and curvature use the same outer-road-mouth geometry as the final SVG road surface. The car then becomes stationary on the chosen outbound lane.
+- A same-arm merge no longer automatically blocks a second vehicle. In safe mode, simultaneous merges to distinct lanes with consistent lane order can proceed; conflicting targets, identical starts and crossover movements remain serialized.
+- The provisional aligned-lane allowance also permits a following vehicle to enter its separate circulating lane when a same-arm car has already entered its own matching lane. These rules are not full swept-path conflict detection.
+- CI runs `tests/check_routes.js` to test permitted East exits, simultaneous lane 1+2 merges, blocked same-target merges, roundabout-to-exit continuity and completion on all four exits.
+- **Limitations:** fixed-speed visual routes, no continuous multi-lane merge conflict simulation, no physical turning-radius validation, gap acceptance calibration, or mandatory exit approach lane-changes. Unsafe driving remains optional.
