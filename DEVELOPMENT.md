@@ -87,3 +87,9 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Behaviour preference and minimum gap persist in JSON; both reset to safe defaults.
 - This is not validated car-following physics and does not model vehicle body lengths, acceleration, priority, incidents or actual crashes. It currently affects only the two circulating cars.
 - Future incident simulation should be separately toggleable, with seeded scenarios and incident records rather than treating overlapping vehicle graphics as a confirmed crash.
+
+## V1.15 entry movement and prototype give-way
+- During playback, vehicles placed on an entry approach move toward their give-way line using a normalized entry progress field (0 to 1).
+- At the line, safe mode checks whether the other vehicle is circulating immediately upstream of that arm. When occupied it waits; when clear it joins outer circulating lane 1.
+- Unrestricted/risky mode bypasses that preliminary give-way check. JSON exports preserve progress and driving mode.
+- This is a two-vehicle, schematic demonstrator rather than junction-engineering-valid yielding: no acceleration profiles, route-based lane selection, swept-path geometry, queueing multiple entry vehicles, or calibrated time gaps.
