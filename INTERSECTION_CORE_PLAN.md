@@ -107,3 +107,11 @@ Keep numerical results repeatable given the same initial scenario, seed, time st
 ## Explicit non-goals for the current release
 
 No validated accident reconstruction, assignment of legal fault, collision attribution, microscopic traffic-capacity forecast or certified highway design. The priority is a demonstrable and testable architecture for believable scenarios, not unsupported claims of safety or causal certainty.
+
+## Future map-network, rule-editing and optimisation extension
+
+The shared `RoadSegment`, `LaneConnector`, `TrafficControl`, `RoutePath`, `ConflictZone` and experiment contracts must support **editable junction-wide rules** and **geographic network import** without needing separate rendering or simulation engines. Driver-specific prohibited-turn overrides remain a different feature from modifying permitted lane movements for all vehicles.
+
+After protecting the current V1.26 application and delivering shared path/priority/conflict primitives, add immutable baseline/variant comparisons, fixed-demand traffic-volume experiments, and rule-only optimisation before considering geometric construction proposals. Compare network-wide outcomes using equivalent traffic conditions and repeatable seeds; optimise throughput, delay, queues and measured safety proxies under explicit legal, physical and access constraints. An AI adapter may generate and explain candidate edits, but only the deterministic simulator evaluates performance and all changes require human approval. Preserve browser-only use; reserve the optional Ubuntu backend for large search batches or storage.
+
+For complete feature scope, acceptance cases, data contracts, objectives, map import, and staged AI rollout see **[TRAFFIC_OPTIMISATION_PLAN.md](TRAFFIC_OPTIMISATION_PLAN.md)**. This is roadmap scope; no rule-network editor, map importer or optimisation engine is implemented yet.
