@@ -53,7 +53,7 @@ assert "function normalizeVehicles()" in html
 assert "function renderVehicles()" in html
 assert "defaultVehicles()" in html
 assert "vehicles:obj.vehicles||defaultVehicles()" in html
-assert "v.side==='entry'?'in':'out'" in html
+assert "v.side==='exit'?'out':'in'" in html
 assert "v.side==='circulating'?state.circulating" in html
 assert "Angle clockwise from North" in html
 assert "radius=inner+(state.circulating-v.lane+.5)*w" in html
