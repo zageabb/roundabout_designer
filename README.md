@@ -43,3 +43,9 @@ GitHub Actions runs source checks, JavaScript syntax validation and executable t
 This is a **visual prototype, not a verified traffic-engineering model**. Give-way checks, safe following and lane-conflict rules are simplified. Trails and approximate wait times do not establish a real-world crash, priority fault, safe distance or traffic capacity. Vehicle speeds are angular playback rates rather than calibrated km/h; exit trajectories do not yet simulate mandatory weaving/lane changing.
 
 The planned next stages are better route geometry and conflict modelling, segment-specific circulating lanes, demand inputs, reproducible traffic flow and statistics, and optional AI analysis that does not alter the deterministic simulator. See `DEVELOPMENT.md` and `SIMULATION_ARCHITECTURE.md`.
+
+## Planned multi-junction architecture
+
+The next development stage will extract the existing single-file application into **maintainable frontend modules**, using a common directed lane graph, road segments, entry merges, exit diverges, priority rules and path-based vehicle conflict analysis. The current roundabout remains the regression baseline; a basic priority T-junction will be the first proof that the same engine can drive another junction type.
+
+The app will **remain a static/offline browser application initially**. Browser Web Workers are preferred for heavy numerical simulations that would block the interface. An authenticated Ubuntu computation API and persistent storage are optional later capabilities for large batches, shared scenarios or scheduled work, not requirements for clean code organisation. Details and implementation acceptance tests are specified in [INTERSECTION_CORE_PLAN.md](INTERSECTION_CORE_PLAN.md) and [SIMULATION_ARCHITECTURE.md](SIMULATION_ARCHITECTURE.md).
