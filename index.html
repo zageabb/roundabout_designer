@@ -33,7 +33,7 @@ function normalizeVehicles(){
  const v=state.vehicles[id]||{arm:'North',side:'entry',lane:1};
  v.arm=['North','East','South','West'].includes(v.arm)?v.arm:'North';
  v.side=['entry','exit','circulating'].includes(v.side)?v.side:'entry';
- v.angle=((Number(v.angle)||0)%360+360)%360;
+ v.angle=((Number(v.angle??45)%360)+360)%360;
  const limit=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='entry'?'in':'out'];
  v.lane=Math.max(1,Math.min(limit,Math.floor(Number(v.lane)||1)));
  state.vehicles[id]=v;
@@ -46,13 +46,14 @@ function renderVehicles(){
  return '<strong>Vehicle '+id+'</strong><div class="row">'+
  '<select data-vehicle="'+id+'" data-field="arm" '+(v.side==='circulating'?'disabled':'')+'>'+['North','East','South','West'].map(x=>'<option '+(x===v.arm?'selected ':'')+'value="'+x+'">'+x+'</option>').join('')+'</select>'+
  '<select data-vehicle="'+id+'" data-field="side"><option value="entry" '+(v.side==='entry'?'selected':'')+'>Entry</option><option value="exit" '+(v.side==='exit'?'selected':'')+'>Exit</option><option value="circulating" '+(v.side==='circulating'?'selected':'')+'>Roundabout</option></select>'+
- '<select data-vehicle="'+id+'" data-field="lane">'+Array.from({length:n},(_,i)=>'<option value="'+(i+1)+'" '+(v.lane===i+1?'selected':'')+'>Lane '+(i+1)+'</option>').join('')+'</select></div>'+(v.side==='circulating'?'<div class="row"><label>Angle clockwise from North</label><input type="number" min="0" max="359" step="5" data-vehicle="'+id+'" data-field="angle" value="'+Math.round(v.angle)+'"></div>':'');
+ '<select data-vehicle="'+id+'" data-field="lane">'+Array.from({length:n},(_,i)=>'<option value="'+(i+1)+'" '+(v.lane===i+1?'selected':'')+'>Lane '+(i+1)+'</option>').join('')+'</select></div>'+(v.side==='circulating'?'<div class="row"><label>Angle clockwise from North</label><input type="range" min="0" max="359" step="1" data-vehicle="'+id+'" data-field="angle" value="'+Math.round(v.angle)+'"><output>'+Math.round(v.angle)+'°</output></div>':'');
  }).join('');
- $('vehicles').querySelectorAll('select,input').forEach(el=>el.onchange=()=>{
+ $('vehicles').querySelectorAll('select,input').forEach(el=>{el.onchange=()=>{
  const v=state.vehicles[el.dataset.vehicle];
+ if(el.dataset.field==='side'&&el.value==='circulating'&&v.side!=='circulating')v.angle=45;
  v[el.dataset.field]=['lane','angle'].includes(el.dataset.field)?Number(el.value):el.value;
  normalizeVehicles();renderVehicles();draw();
- });
+ };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';draw()};});
 }
 const $=x=>document.getElementById(x);
 function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
@@ -210,7 +211,7 @@ function draw(){
  const x=v.side==='entry'?-n*w+(v.lane-.5)*w:(v.lane-.5)*w;
  const y=join+210,angle=orientation[v.arm],fill=id==='A'?'#f5ba43':'#4bb9f3';
  // Circulating lane 1 is outermost; all vehicle headings follow UK clockwise flow.
- const radius=outer-(v.lane-.5)*w,theta=v.angle*Math.PI/180;
+ const radius=inner+(state.circulating-v.lane+.5)*w,theta=v.angle*Math.PI/180;
  const placement=v.side==='circulating'
  ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+(v.angle+90)+')'
  :'rotate('+angle+') translate('+x+' '+y+')';
