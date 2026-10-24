@@ -16,7 +16,7 @@
 <button id="save" class="primary">Export SVG</button><button id="png">Export PNG</button><button id="json">Save JSON</button><button id="load">Load JSON</button><button id="reset">Reset defaults</button></div>
 <input id="file" type="file" accept=".json,application/json" hidden></div>
 <p class="warning">Concept-layout tool, not a certified road design. The schematic shows lane counts, directions, circulation and give-way lines. It does not validate swept paths, weaving distances, signage or DMRB design compliance.</p>
-</aside><section class="stage"><h2>Live road layout</h2><div id="view"></div><p class="legend">Dark grey: carriageway · White dashed: lane dividers · Orange arrows: entry lane movement · Blue labels: approach direction</p><div class="status" id="status">Preloaded with your North, East, South and West lane arrangements.</div></section></main>
+</aside><section class="stage"><h2>Live road layout</h2><div id="view"></div><p class="legend">Dark grey: carriageway · White dashed: lane dividers · White branched arrows: entry lane movement · Blue labels: approach direction</p><div class="status" id="status">Preloaded with your North, East, South and West lane arrangements.</div></section></main>
 <script>
 const presets={North:{in:3,out:2,moves:['LS','S','R']},East:{in:3,out:2,moves:['L','LS','SR']},South:{in:4,out:2,moves:['L','LS','S','R']},West:{in:3,out:2,moves:['LS','S','R']}};
 const moves=['L','S','R','LS','SR','LR','LSR'];
@@ -84,7 +84,16 @@ function draw(){
   svg+='</g>';
  }
  // roundabout annulus: render above approach ends.
- svg+='<circle r="'+(outer+1)+'" fill="#4b5156" stroke="#f8fafb" stroke-width="4"/>';
+ svg+='<circle r="'+(outer+1)+'" fill="#4b5156"/>';
+ // Four separate kerb arcs leave actual gaps where roads join the roundabout.
+ const maxRoad=Math.max(...Object.values(state.arms).map(a=>Math.max(a.in,a.out)*w));
+ const mouth=Math.asin(Math.min(.75,(maxRoad+20)/(outer+1)))*180/Math.PI;
+ for(let direction=0;direction<360;direction+=90){
+   const from=(direction+mouth)*Math.PI/180,to=(direction+90-mouth)*Math.PI/180;
+   svg+='<path d="M '+((outer+1)*Math.sin(from))+' '+(-(outer+1)*Math.cos(from))+
+      ' A '+(outer+1)+' '+(outer+1)+' 0 0 1 '+((outer+1)*Math.sin(to))+' '+(-(outer+1)*Math.cos(to))+
+      '" fill="none" stroke="#f8fafb" stroke-width="4"/>';
+ }
  svg+='<circle r="'+inner+'" fill="#85ab77" stroke="#d7ded1" stroke-width="9"/>';
  for(let k=1;k<N;k++)svg+='<circle r="'+(inner+k*w)+'" fill="none" stroke="#e5e8e9" stroke-width="2" stroke-dasharray="19 13"/>';
  // clockwise curved travel direction tangents (screen coordinates: clockwise)
