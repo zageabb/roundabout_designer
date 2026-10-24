@@ -53,3 +53,17 @@ The app will **remain a static/offline browser application initially**. Browser 
 ## Longer-term map-based traffic experiments and optimisation
 
 The planned common engine will eventually allow users to import an area from verified geographic road-network data, correct lane/priority details, edit legal lane or junction rules, and compare **baseline versus alternative** multi-vehicle simulations for throughput, waiting, queues and neighbouring junction impacts. Rule-only alternatives will be investigated before potential physical alterations such as extra lanes or changed junction layouts. An optional AI assistant may propose and explain candidate designs, but a separate deterministic simulator will evaluate each under consistent demand, constraints and documented uncertainty. **These future features are not yet part of the V1.26 application.** See [TRAFFIC_OPTIMISATION_PLAN.md](TRAFFIC_OPTIMISATION_PLAN.md).
+
+## V1.27 static modular source layout
+
+The app still runs by opening `index.html` or serving the repository root; there is no build/install requirement. The UI is now a small HTML page loading relative assets:
+
+- `src/styles.css` — layout and presentation.
+- `src/state.js` — initial UK lane configuration and scenario state.
+- `src/simulation.js` — A/B motion, replay, route overrides, events and preliminary safe-driving checks.
+- `src/controls.js` — vehicle cards, editor controls and user interaction.
+- `src/geometry.js` — road shapes and road/path helpers.
+- `src/render.js` — SVG road and vehicle drawing.
+- `src/bootstrap.js` — export/import and initialisation.
+
+Classic scripts currently share scope for backwards compatibility; pure ES modules and DOM-independent simulation APIs are the **next** refactor, not yet completed. **Ubuntu/UDA deployment must publish the entire `src/` directory** along with `index.html`; copying only the HTML file will no longer start the app. Paths are relative to support `/apps/roundabout-designer/` deployments. CI also includes static-module and full-script-startup smoke tests.
