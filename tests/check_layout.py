@@ -3,7 +3,7 @@
 from pathlib import Path
 import re
 
-html = Path("index.html").read_text() + "\n" + "\n".join(Path("src", name).read_text() for name in ("state.js", "simulation.js", "controls.js", "geometry.js", "render.js", "bootstrap.js"))
+html = Path("index.html").read_text() + "\n" + "\n".join(Path("src", name).read_text() for name in ("state.js", "lane-network.js", "simulation.js", "controls.js", "geometry.js", "render.js", "bootstrap.js"))
 assert "['South',0],['West',90],['North',180],['East',270]" in html
 for name, inbound, outbound, moves in (
     ("North", 3, 2, "LS','S','R"),
@@ -50,7 +50,7 @@ assert ("North", 3, "R", "West") in paths
 assert ("South", 4, "R", "East") in paths
 assert "function provisionalLaneMapping(config)" in html
 assert "function validateNetwork(config)" in html
-assert "circulatingLane:entry,exitLane:exit,status:'provisional'" in html
+assert "return LaneNetwork.build(config).turns" in html # was: circulatingLane:entry,exitLane:exit,status:'provisional'" in html
 assert "Provisional mapping only" in html
 assert "function normalizeVehicles()" in html
 assert "function renderVehicles()" in html
@@ -59,8 +59,8 @@ assert "vehicles:obj.vehicles||defaultVehicles()" in html
 assert "v.side==='exit'?'out':'in'" in html
 assert "v.side==='circulating'?state.circulating" in html
 assert "Angle clockwise from North" in html
-assert "radius=inner+(state.circulating-v.lane+.5)*w" in html
-assert "(v.angle+90)" in html
+assert "radius=inner+(config.circulating-v.lane+.5)*width" in html
+assert "heading:v.angle+90" in html
 assert "v.angle=45" in html
 assert "el.oninput=()" in html
 assert 'max="355" step="5"' in html
