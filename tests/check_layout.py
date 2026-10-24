@@ -18,6 +18,9 @@ assert "for(const [name,x,y]" in html, "Cardinal labels must be outside rotated 
 assert "state.circulating" in html
 assert "function draw()" in html
 assert "rotate(\'+(deg-90)+\')" in html, "Clockwise arrow tangents have changed"
-assert "const w=state.width*9.5" in html, "Wider visual lane scaling was removed"
+assert "const w=state.width*state.displayScale" in html, "Visual lane spacing must be independently configurable"
+assert "const extent=end+76, canvas=extent*2" in html, "Canvas must fit expanded geometry"
+assert "state.laneNumbers" in html, "Lane-number overlay setting must be retained"
+assert "r=inner+state.circulating*w/2" in html, "Circulating arrows should be centered within the annulus"
 assert "width:4" in html, "Default road lane width must be 4 m"
 print("UK lane presets, bearings, detached labels and renderer checks passed.")
