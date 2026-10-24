@@ -60,3 +60,10 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - Circulating position uses an outer-to-inner lane index (1 is outermost) and angle clockwise from North (0–359 degrees).
 - SVG positions and vehicle headings follow circular geometry and clockwise movement; no actual vehicle motion/priority logic yet.
 - The arm dropdown is disabled when placing a vehicle in the circular carriageway. Vehicle positions persist in JSON.
+
+## V1.10 circulating vehicle playback
+- Vehicles A/B can be started, paused, and stepped forward by 5 degrees when placed on the circular carriageway.
+- Playback uses requestAnimationFrame with elapsed-time scaling, bounded frame deltas and a user-adjustable 1–90 degrees/second rotation rate.
+- Entry and exit vehicles remain static. Manual editing, JSON load and reset stop playback.
+- This is animation only: no gap acceptance, speed dynamics, priorities, collisions or lane changing. Playback speed is a UI control, not km/h.
+- Verify live UDA browser display and CI status after publishing.
