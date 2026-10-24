@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.simulation-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}.simulation-toolbar .buttons{margin:0}.simulation-toolbar button{min-width:76px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.20</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.21</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -305,8 +305,15 @@ function draw(){
    // Geometry-driven outer road shoulders: the mouth begins exactly on the
    // circle's outside kerb, with the first control tangent to its circumference.
    // This removes the earlier straight-edged notches and radial white seams.
-   const shoulder=join+122, sweep=Math.PI*.22, sy=outer*Math.cos(sweep);
-   const lip=outer*Math.sin(sweep),tx=Math.cos(sweep)*75,ty=Math.sin(sweep)*75;
+   const armJoinProfile={
+     North:{sweep:.17,tangent:95,shoulderLift:150},
+     East:{sweep:.22,tangent:75,shoulderLift:122},
+     South:{sweep:.21,tangent:80,shoulderLift:130},
+     West:{sweep:.17,tangent:95,shoulderLift:150}
+   };
+   const profile=armJoinProfile[name];
+   const shoulder=join+profile.shoulderLift,sweep=Math.PI*profile.sweep,sy=outer*Math.cos(sweep);
+   const lip=outer*Math.sin(sweep),tx=Math.cos(sweep)*profile.tangent,ty=Math.sin(sweep)*profile.tangent;
    const leftEdge='M '+(-lip)+' '+sy+' C '+(-lip+tx)+' '+(sy+ty)+' '+(-ei)+' '+(shoulder-66)+' '+(-ei)+' '+shoulder+' L '+(-ei)+' '+end;
    const rightEdge='M '+lip+' '+sy+' C '+(lip-tx)+' '+(sy+ty)+' '+eo+' '+(shoulder-66)+' '+eo+' '+shoulder+' L '+eo+' '+end;
    // Same-colour overlapping fills join the disk without seams.
