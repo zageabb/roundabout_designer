@@ -23,4 +23,26 @@ assert "const extent=end+76, canvas=extent*2" in html, "Canvas must fit expanded
 assert "state.laneNumbers" in html, "Lane-number overlay setting must be retained"
 assert "r=inner+state.circulating*w/2" in html, "Circulating arrows should be centered within the annulus"
 assert "width:4" in html, "Default road lane width must be 4 m"
-print("UK lane presets, bearings, detached labels and renderer checks passed.")
+assert "function routeDestination(origin,movement)" in html
+assert "function deriveConnections(config)" in html
+assert "function renderConnectivity()" in html
+assert "state.showRoutes" in html
+directions = ["North", "East", "South", "West"]
+offset = {"L": 1, "S": 2, "R": 3}
+presets = {
+ "North": ["LS", "S", "R"],
+ "East": ["L", "LS", "SR"],
+ "South": ["L", "LS", "S", "R"],
+ "West": ["LS", "S", "R"],
+}
+paths = [
+ (origin, lane+1, movement, directions[(directions.index(origin)+offset[movement]) % 4])
+ for origin, lanes in presets.items()
+ for lane, allowed in enumerate(lanes)
+ for movement in allowed
+]
+assert len(paths) == 18
+assert ("East", 1, "L", "South") in paths
+assert ("North", 3, "R", "West") in paths
+assert ("South", 4, "R", "East") in paths
+print("UK lane layout and 18 permitted turning connections checked.")
