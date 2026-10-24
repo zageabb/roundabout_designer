@@ -119,3 +119,11 @@ The long-term purpose is vehicle-volume simulation with optional AI analysis. Ke
 - The provisional aligned-lane allowance also permits a following vehicle to enter its separate circulating lane when a same-arm car has already entered its own matching lane. These rules are not full swept-path conflict detection.
 - CI runs `tests/check_routes.js` to test permitted East exits, simultaneous lane 1+2 merges, blocked same-target merges, roundabout-to-exit continuity and completion on all four exits.
 - **Limitations:** fixed-speed visual routes, no continuous multi-lane merge conflict simulation, no physical turning-radius validation, gap acceptance calibration, or mandatory exit approach lane-changes. Unsafe driving remains optional.
+
+## V1.25 optional lane-turn-rule override
+- Each vehicle now has an independent `Override lane turn rules` checkbox in its card below the road diagram.
+- Default (unchecked) destination options are derived from the origin entry lane's `moves` values; lane 2 East is straight-only and therefore normally exits West.
+- When checked, all four exit arms (including a return to the entry road) are available. An explicit example is East entry lane 2 taking the South (left) exit despite straight-only markings.
+- When an off-rule route is selected, the vehicle card shows a distinct `Rule-breaking route` warning. The flag and destination are serialized to JSON and restored on import.
+- Turning the override off restores a legal route if the selected destination was not permitted; automatic safe following and vehicle spacing remain unchanged by this flag. The flag models a deliberate route/marking violation, **not** a confirmed collision or a suspension of all give-way rules.
+- CI includes executable coverage confirming legal defaults, allowed override selection, forbidden-route labelling, disabling/resetting the override, and JSON round-trip preservation.
