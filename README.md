@@ -1,43 +1,45 @@
 # Roundabout Designer
 
-A browser-based UK left-hand-traffic roundabout schematic builder.
+A browser-based, offline-capable **UK left-hand-traffic roundabout schematic and two-vehicle scenario simulator**. Vehicles circulate clockwise, with independently configured entry, circulating and exit lanes.
 
 ## Start
 
-Open `index.html` in any modern browser. No installation, build tooling, API key or server is required.
+Open `index.html` in any modern browser. There is no build step, database, API key or server requirement. To serve the app from Ubuntu or behind a path-prefixed reverse proxy, serve the repository root as static files, e.g. `python3 -m http.server 8080`.
 
-For server deployment, serve the repository root using any static web server (including a path-prefixed reverse proxy). Example: `python3 -m http.server 8080`.
+## Road configuration
 
-## Current capabilities (v0.1)
+- Circulating lanes (1–5), lane width, island diameter and drawing spacing.
+- Independent entry and exit lane counts for North, East, South and West.
+- Movement arrows per entry lane, provisional lane mappings and a continuous SVG road outline.
+- Show/hide lane numbers, schematic route connectivity and travelled vehicle paths.
+- Export SVG/PNG and import/export scenario JSON.
 
-- Configurable **circulating lanes (1–5)**, island diameter and nominal lane width.
-- Independently configurable entry and exit lane counts for North, East, South and West.
-- Entry lane movement rules, ordered from driver's left to right.
-- Default UK traffic orientation with clockwise circulation.
-- Responsive schematic layout with labelled movements and lane numbers.
-- Download SVG/PNG and save/load configurations as JSON.
-- No user data sent to a remote service.
+### Current starting layout
 
-## Preloaded scenario
-
-| Arm | In | Out | Lane 1 → last |
+| Approach | In | Out | Permitted movements, driver's leftmost lane first |
 | --- | ---: | ---: | --- |
-| North | 3 | 2 | Left+straight, straight, right |
-| East | 3 | 2 | Left, left+straight, straight+right |
-| South | 4 | 2 | Left, left+straight, straight, right |
-| West | 3 | 2 | Left+straight, straight, right |
+| North | 3 | 2 | Left+straight; straight; right |
+| East | 3 | 2 | **Left+straight; straight; straight+right** |
+| South | 4 | 2 | Left; left+straight; straight; right |
+| West | 3 | 2 | Left+straight; straight; right |
 
-Circulating lanes start at **3** as an editable placeholder; the actual number has not been confirmed.
+## Two-vehicle playback
 
-## Scope and limitations
+1. Configure vehicles A and B **below the road diagram**: approach, lane, target circulating lane, destination exit, exit lane and speed.
+2. By default, exit destinations respect that entry lane's permitted arrows. Tick **Override lane turn rules** on a vehicle to make all four exits selectable for a deliberate rule-breaking scenario. The vehicle card shows a warning if its selected exit is prohibited.
+3. Choose **Safe following** or **Unrestricted / risky**, adjust playback speed and press **Play**, **Pause** or **Step +5°** above the diagram.
+4. Toggle **Show travelled paths** to follow A and B; the **Scenario activity** panel records simulated elapsed time, approximate give-way waiting time and events such as merging and exiting.
+5. **Replay scenario** returns the vehicles to their positions at the first Play/Step of this run while retaining their selected routes and overrides. Editing a vehicle or road configuration starts a new scenario snapshot. **Export events CSV** saves the current event history.
+6. **Reset defaults** resets the whole road configuration; **Save JSON** preserves the current editable configuration, while telemetry/event history remains a per-run temporary record.
 
-This is an **initial functional schematic**, not a surveyed or DMRB-compliant highway engineering plan. Geometric shapes are deliberately simplified. Road arrows are labels, lane-boundaries and markings are schematic, and movements are not mapped to lane-by-lane trajectories on the circulating carriageway. Individual segment lane drops, spiral lane lines, entry flare geometry, pedestrian crossing details, swept-path checks, signalised arms and traffic capacity modelling are **not implemented**.
+Example: choose East lane 2 for A (straight-only) and enable **Override lane turn rules** to send A to **South** instead of the normal **West** exit. Set B in East lane 1 targeting circulating lane 1. Separate, noncrossing lane merges may proceed together.
 
-## Roadmap
+## CI
 
-1. Precise path-based entry/exit transitions and tangency to the circulating annulus.
-2. Segment-specific circulating lane counts (between consecutive arms).
-3. Spiral lane designation and lane continuity mapping across exits.
-4. Editable arm bearings, eccentric islands and one-way/slip bypass roads.
-5. Traffic counts and movement matrices, exportable labelled plans.
-6. Geometric validity tests and visual snapshot regression tests.
+GitHub Actions runs source checks, JavaScript syntax validation and executable tests of the perimeter geometry, merge trajectories, outbound routes, parallel merges, rule-breaking route overrides and scenario replay/activity metrics.
+
+## Limitations and future development
+
+This is a **visual prototype, not a verified traffic-engineering model**. Give-way checks, safe following and lane-conflict rules are simplified. Trails and approximate wait times do not establish a real-world crash, priority fault, safe distance or traffic capacity. Vehicle speeds are angular playback rates rather than calibrated km/h; exit trajectories do not yet simulate mandatory weaving/lane changing.
+
+The planned next stages are better route geometry and conflict modelling, segment-specific circulating lanes, demand inputs, reproducible traffic flow and statistics, and optional AI analysis that does not alter the deterministic simulator. See `DEVELOPMENT.md` and `SIMULATION_ARCHITECTURE.md`.
