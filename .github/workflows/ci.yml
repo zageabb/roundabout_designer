@@ -11,6 +11,8 @@ jobs:
         run: python3 tests/check_layout.py
       - name: Exercise road geometry
         run: node tests/check_geometry.js
+      - name: Check smooth vehicle merge trajectories
+        run: node tests/check_merge.js
       - name: Check browser JavaScript syntax
         run: |
           python3 - <<'PY'
