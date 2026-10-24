@@ -60,4 +60,6 @@ assert "radius=inner+(state.circulating-v.lane+.5)*w" in html
 assert "(v.angle+90)" in html
 assert "v.angle=45" in html
 assert "el.oninput=()" in html
-print("UK layout and circulating vehicle position controls checked.")
+assert 'max="355" step="5"' in html
+assert 'data-nudge="-1"' in html and 'data-nudge="1"' in html
+print("UK layout and fine vehicle position controls checked.")
