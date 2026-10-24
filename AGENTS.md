@@ -29,3 +29,10 @@
 - The current `index.html` loads six ordered classic scripts from `src/` and one stylesheet. Preserve this order and relative URLs unless migrating both browser delivery and tests intentionally. Never re-inline the entire application simply to avoid updating a test.
 - When moving functions between scripts, maintain correct initialisation order and verify `tests/read_app.js`, `tests/check_modules.js`, `tests/check_runtime.js`, plus all other existing regression suites. Shared-global classic scripts are transitional; do not assume they are isolated ES modules.
 - UDA/static publishing must include `src/` assets at the application's relative prefix. Document and verify any reverse-proxy-specific change without hard-coded server-root asset paths.
+
+## V1.28 network-model invariants
+- `src/lane-network.js` is pure, browser-classic-script and CommonJS compatible, and must not import `document`, hard-code deployed routes or depend on mutable browser state.
+- Keep lane IDs and merge/diverge node identifiers stable across redraws, initial scenarios, exports and simulation events. Permitted-turn intent is **separate** from the individual car's violation/override flag.
+- `LaneNetwork.sampleVehiclePose` must remain the common source for rendered A/B positions and recorded trails. Curve callbacks may temporarily come from the legacy roundabout; replace only when tested for position and heading continuity.
+- Provisional merge/exit lane connectors are **not** evidence of geometric feasibility or safety. Conflict analysis requires actual path intersections, vehicle envelopes, occupancy windows, give-way rules and reliable timings before labelling a possible interaction.
+- Run `tests/check_network.js`, `tests/check_runtime.js` and all existing CI tests when changing lane indexing, entry counts, route selection or pose calculations.
