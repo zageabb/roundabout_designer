@@ -23,3 +23,6 @@ This first milestone is a functional diagram editor, not a finished true-to-life
 
 ## Planned CI
 Add tests for left-side orientation, clockwise flow, all arm lane movements, min/max circulating settings, JSON round trip and snapshot SVG generation.
+
+## Simulation-oriented design decision (24 Oct 2026)
+The long-term purpose is vehicle-volume simulation with optional AI analysis. Keep geometry, lane connectivity, demand, simulation, rendering and AI interface as separate modules. See `SIMULATION_ARCHITECTURE.md`. Ubuntu UDA deployment preparation is in `deploy/README.md`, but live server configuration remains unverified.
