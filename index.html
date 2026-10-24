@@ -42,6 +42,17 @@ inputValue('incoming',1,6,1,v=>{const a=state.arms[active];a.in=v;while(a.moves.
 inputValue('outgoing',1,6,1,v=>state.arms[active].out=v);
 function line(x1,y1,x2,y2,color,thick,dash=''){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="'+thick+'" '+(dash?'stroke-dasharray="'+dash+'"':'')+'/>'}
 function text(x,y,s,size=17,fill='#fff',anchor='middle'){return '<text x="'+x+'" y="'+y+'" fill="'+fill+'" font-size="'+size+'" font-weight="700" text-anchor="'+anchor+'" dominant-baseline="middle">'+s+'</text>'}
+// A single, shared-stem road arrow per inbound lane. Multiple movements branch
+// from one trunk, rather than rendering separate arrow glyphs alongside each other.
+function movementArrow(x,y,movement,scale=1){
+ const left=movement.includes('L'),straight=movement.includes('S'),right=movement.includes('R');
+ const p=['M 0 24 L 0 -3'];
+ if(straight)p.push('M -5 -12 L 0 -21 L 5 -12');
+ if(left){p.push('M 0 -3 Q -1 -12 -13 -12');p.push('M -7 -18 L -15 -12 L -7 -6')}
+ if(right){p.push('M 0 -3 Q 1 -12 13 -12');p.push('M 7 -18 L 15 -12 L 7 -6')}
+ // Unselected straight direction does not get an arrowhead.
+ return '<g transform="translate('+x+' '+y+') scale('+scale+')" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+p.join(' ')+'"/></g>';
+}
 function draw(){
  const N=state.circulating, w=state.width*8, inner=state.diameter*3.1, outer=inner+N*w;
  const start=outer-5,end=505, size=1120, c=size/2;
@@ -62,9 +73,7 @@ function draw(){
   for(let i=0;i<a.in;i++){
    const x=-ei+(i+.5)*w;
    svg+=text(x,start+92,String(i+1),Math.min(16,w*.45),'#ffd28c');
-   svg+=text(x,start+122,a.moves[i].replace('L','←').replace('S','↑').replace('R','→'),Math.min(18,w*.62),'#faca74');
-   svg+=line(x,start+176,x,start+152,'#fff',3);
-   svg+='<path d="M '+(x-5)+' '+(start+160)+' L '+x+' '+(start+150)+' L '+(x+5)+' '+(start+160)+'" fill="none" stroke="white" stroke-width="3"/>';
+   svg+=movementArrow(x,start+154,a.moves[i],Math.min(1,w/36));
   }
   for(let i=0;i<a.out;i++){
    const x=(i+.5)*w;
