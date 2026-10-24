@@ -5,6 +5,7 @@ function section(a,b){const i=html.indexOf(a),j=html.indexOf(b,i);assert(i>=0&&j
 const funcs=[
  section('function routeDestination(origin,movement){','function deriveConnections('),
  section('function allowedExitArms(v,config){','function normalizeVehicles(){'),
+ section('function normalizeVehicles(){','function stopPlayback(){'),
  section('function entryGapClear(id){','function playbackTick(time){'),
  section('function roadSurfaceGeometry(config,outer,end){','function draw(){')
 ].join('\n');
@@ -18,12 +19,37 @@ const state={circulating:3,width:4,displayScale:9.5,diameter:38,minGap:8,driving
 const context=vm.createContext({state,entryAngles:{North:0,East:90,South:180,West:270},
  renderVehicles(){},draw(){},$:id=>id==='vehicles'?{querySelectorAll(){return []}}:{value:20},
  safeAdvance:()=>({A:2,B:2})});
-const api=vm.runInContext(funcs+'\n;({allowedExitArms,mergingPathsConflict,entryGapClear,advanceEntries,exitSweep,exitGeometry,circularExitStart,advanceVehicles});',context);
+const api=vm.runInContext(funcs+'\n;({allowedExitArms,selectableExitArms,violatesExitRule,normalizeVehicles,mergingPathsConflict,entryGapClear,advanceEntries,exitSweep,exitGeometry,circularExitStart,advanceVehicles});',context);
 function v(lane,targetLane){return {arm:'East',entryLane:lane,side:'entry',lane,targetLane,progress:1,mergeProgress:0,waiting:false,speed:20,exitArm:'West',exitLane:2,angle:90}}
 const exits=(lane)=>Array.from(api.allowedExitArms(v(lane,lane),state));
 assert.deepEqual(exits(1),['South','West']);
 assert.deepEqual(exits(2),['West']);
 assert.deepEqual(exits(3),['West','North']);
+// Legal turn restrictions remain intact until a vehicle explicitly opts out.
+const eastLane2=v(2,2);
+eastLane2.overrideExitRules=false;
+eastLane2.exitArm='South';
+assert.deepEqual(Array.from(api.selectableExitArms(eastLane2,state)),['West']);
+assert.equal(api.violatesExitRule(eastLane2,state),true);
+state.vehicles={A:eastLane2,B:v(1,1)};
+api.normalizeVehicles();
+assert.equal(state.vehicles.A.exitArm,'West','Illegal exit must be rejected by default');
+state.vehicles.A.overrideExitRules=true;
+state.vehicles.A.exitArm='South';
+api.normalizeVehicles();
+assert.deepEqual(Array.from(api.selectableExitArms(state.vehicles.A,state)),['North','East','South','West']);
+assert.equal(state.vehicles.A.exitArm,'South','Explicit override must keep East lane 2 to South');
+assert.equal(api.violatesExitRule(state.vehicles.A,state),true);
+const roundtrip=JSON.parse(JSON.stringify(state.vehicles.A));
+assert.equal(roundtrip.overrideExitRules,true,'Scenario override persists in saved JSON');
+assert.equal(roundtrip.exitArm,'South','Override exit persists in saved JSON');
+state.vehicles.A.overrideExitRules=false;
+api.normalizeVehicles();
+assert.equal(state.vehicles.A.exitArm,'West','Disabling override restores legal routing');
+assert.equal(api.violatesExitRule(state.vehicles.A,state),false);
+assert(html.includes('data-field="overrideExitRules"'),'Override checkbox must be visible on vehicle cards');
+assert(html.includes('Rule-breaking route:'),'Illegal route must have a visible warning');
+
 state.vehicles={A:v(1,1),B:v(2,2)};
 api.advanceEntries(1);
 assert.equal(state.vehicles.A.side,'merging','East lane 1 should merge');
@@ -60,4 +86,4 @@ assert.equal(state.vehicles.A.lane,2);
 assert.equal(state.vehicles.A.exitArm,'none');
 assert(html.indexOf('class="vehicle-config"')>html.indexOf('id="view"'),'Car settings belong below road diagram');
 assert.equal((html.match(/id="vehicles"/g)||[]).length,1);
-console.log('Route choices, parallel East lane merges, crossing conflicts and 4-arm exits validated.');
+console.log('Legal and overridden routes, parallel merges, outbound curves and scenario persistence validated.');
