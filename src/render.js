@@ -2,6 +2,7 @@ function draw(){
  normalizeVehicles();
  proximityWarning();
  const issues=validateNetwork(state);if(issues.length){updateStatus(issues.join('; '));return}
+ const interaction=projectedVehicleInteraction();
  const w=state.width*state.displayScale, inner=state.diameter*3.1, outer=inner+state.circulating*w;
  const join=outer-18, end=Math.max(490,outer+245);
  const extent=end+76, canvas=extent*2;
@@ -42,6 +43,14 @@ function draw(){
      const x=p[0]*r,y=p[1]*r,u=q[0]*r,v=q[1]*r;
      svg+='<path d="M '+x+' '+y+' Q 0 0 '+u+' '+v+'" fill="none" stroke="#65e4f5" stroke-opacity=".45" stroke-width="3" stroke-dasharray="9 8"/>';
    }
+ }
+ // A candidate is a shared position in the projected *centreline* paths,
+ // not a verified swept-body impact or legal-fault finding.
+ if(state.showConflictZones!==false&&interaction.point&&interaction.spatialCandidate){
+  const p=interaction.point,color=interaction.simultaneousCandidate?'#ffba60':'#8ce3ff';
+  svg+='<g transform="translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')" aria-label="Projected interaction location">'+
+   '<circle r="18" fill="none" stroke="'+color+'" stroke-width="4" stroke-dasharray="7 5"/>'+
+   '<circle r="4" fill="'+color+'" stroke="#22333e" stroke-width="1.5"/></g>';
  }
  // Curbed central island, not a solid ring covering the entries.
  svg+='<circle r="'+inner+'" fill="#8aaa7e" stroke="#d8dfd3" stroke-width="8"/>';
