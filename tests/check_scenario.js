@@ -1,13 +1,14 @@
 // End-to-end unit checks for replay snapshots, traces and scenario telemetry.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=require('./read_app').readAppSource();
+const LaneNetwork=require('../src/lane-network.js');
 function section(a,b){const i=html.indexOf(a),j=html.indexOf(b,i);assert(i>=0&&j>i,'Missing '+a);return html.slice(i,j)}
 const ui={runSummary:{textContent:''},runEvents:{textContent:'',innerHTML:''},playSpeed:{value:20}};
 const state={circulating:3,diameter:38,width:4,displayScale:9.5,showTrails:true,arms:{
  North:{in:3,out:2,moves:['LS','S','R']},East:{in:3,out:2,moves:['LS','S','SR']},
  South:{in:4,out:2,moves:['L','LS','S','R']},West:{in:3,out:2,moves:['LS','S','R']}
 }};
-const ctx=vm.createContext({state,structuredClone,entryAngles:{North:0,East:90,South:180,West:270},
+const ctx=vm.createContext({state,structuredClone,LaneNetwork,entryAngles:{North:0,East:90,South:180,West:270},
  $:id=>ui[id]||(ui[id]={textContent:'',innerHTML:''}),
  renderVehicles(){},draw(){},stopPlayback(){},updateStatus(){}});
 const src=[
