@@ -11,6 +11,8 @@ jobs:
         run: python3 tests/check_layout.py
       - name: Validate shared lane-network and vehicle pose contracts
         run: node tests/check_network.js
+      - name: Verify projected path interactions and temporal separation
+        run: node tests/check_conflicts.js
       - name: Exercise road geometry
         run: node tests/check_geometry.js
       - name: Check smooth vehicle merge trajectories
