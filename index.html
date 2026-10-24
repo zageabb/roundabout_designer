@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.simulation-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}.simulation-toolbar .buttons{margin:0}.simulation-toolbar button{min-width:76px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.22</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.23</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -79,21 +79,35 @@ const entryAngles={North:0,East:90,South:180,West:270};
 // Geometric merge from the approach's give-way line into the outer circular lane.
 // local South approach is then rotated into the chosen compass arm.
 function mergeGeometry(v,progress,config){
+ // Use the SAME entry-mouth geometry that draws the final road perimeter.
+ // Local +Y points outward from the junction, -X is the UK entry side.
  const w=config.width*config.displayScale,inner=config.diameter*3.1;
  const outer=inner+config.circulating*w,join=outer-18;
- const r=outer-(v.targetLane-.5)*w,entryCount=config.arms[v.arm].in;
+ const end=Math.max(490,outer+245);
+ const mouth=roadSurfaceGeometry(config,outer,end).mouths[v.arm].entry;
+ const entryCount=config.arms[v.arm].in,targetLane=Math.max(1,Math.min(config.circulating,v.targetLane));
+ const radius=outer-(targetLane-.5)*w;
  const x0=-entryCount*w+(v.lane-.5)*w,y0=join+45;
- const endAngle=30*Math.PI/180;
- const x3=-r*Math.sin(endAngle),y3=r*Math.cos(endAngle);
- const x1=x0,y1=y0-65,x2=x3+65*Math.cos(endAngle),y2=y3+65*Math.sin(endAngle);
+ const lipAngle=Math.atan2(-mouth.start[0],mouth.start[1]);
+ // Finish beyond the road shoulder, at the real circulating lane centre.
+ // Allow enough sideways travel for the outer entry lane to turn LEFT,
+ // without first drifting right towards the splitter island.
+ const needed=Math.asin(Math.min(.995,(Math.abs(x0)+Math.max(12,w*.36))/radius));
+ const endAngle=Math.min(Math.PI*.49,Math.max(lipAngle+.09,needed));
+ const x3=-radius*Math.sin(endAngle),y3=radius*Math.cos(endAngle);
+ const lateral=Math.max(0,x0-x3),depth=y0-y3;
+ // Constrain both Bézier handles to the span of the endpoints. In the old
+ // version x2=x3+65*cos(angle) could exceed x0, causing a wrong-way S-turn.
+ const exitHandle=Math.max(0,Math.min(68,lateral*.68/Math.max(.1,Math.cos(endAngle)),depth*.7));
+ const x1=x0,y1=y0-Math.min(58,depth*.5);
+ const x2=x3+exitHandle*Math.cos(endAngle),y2=y3+exitHandle*Math.sin(endAngle);
  const t=Math.max(0,Math.min(1,progress)),u=1-t;
  const x=u*u*u*x0+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x3;
  const y=u*u*u*y0+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y3;
  const dx=3*u*u*(x1-x0)+6*u*t*(x2-x1)+3*t*t*(x3-x2);
  const dy=3*u*u*(y1-y0)+6*u*t*(y2-y1)+3*t*t*(y3-y2);
- // Car's longitudinal axis is the negative-y direction in the SVG symbol.
  const heading=Math.atan2(dx,-dy)*180/Math.PI;
- return {x,y,heading};
+ return {x,y,heading,arrivalAngle:endAngle*180/Math.PI};
 }
 function entryGapClear(id){
  const v=state.vehicles[id],target=entryAngles[v.arm];
@@ -123,7 +137,8 @@ function advanceEntries(delta){
    // A complete merge is deliberately slower than a frame: no teleportation.
    v.mergeProgress=Math.min(1,v.mergeProgress+delta*speedFactor/55);
    if(v.mergeProgress>=1){
-    v.side='circulating';v.lane=v.targetLane;v.angle=(entryAngles[v.arm]+30)%360;
+    const terminal=mergeGeometry(v,1,state);
+    v.side='circulating';v.lane=v.targetLane;v.angle=(entryAngles[v.arm]+terminal.arrivalAngle)%360;
     v.progress=0;v.mergeProgress=0;
     renderVehicles();
    }
@@ -312,10 +327,13 @@ function roadSurfaceGeometry(config,outer,end){
  }
  const xy=p=>p[0].toFixed(3)+' '+p[1].toFixed(3);
  const arms=[['North',180],['East',270],['South',0],['West',90]];
+ const mouths={};
  const segments=arms.map(([name,angle])=>{
   const a=config.arms[name];
+  const entry=edge('left',a.in),exit=edge('right',a.out);
+  mouths[name]={entry,exit};
   const convert=e=>Object.fromEntries(Object.entries(e).map(([k,p])=>[k,rotate(p,angle)]));
-  return {left:convert(edge('left',a.in)),right:convert(edge('right',a.out))};
+  return {left:convert(entry),right:convert(exit)};
  });
  const surface=['M '+xy(segments[0].right.start)],kerbs=[];
  for(let i=0;i<segments.length;i++){
@@ -329,7 +347,7 @@ function roadSurfaceGeometry(config,outer,end){
   kerbs.push('M '+xy(l.start)+' A '+outer+' '+outer+' 0 0 1 '+xy(next.start));
  }
  surface.push('Z');
- return {surface:surface.join(' '),kerbs:kerbs.join(' ')};
+ return {surface:surface.join(' '),kerbs:kerbs.join(' '),mouths};
 }
 function draw(){
  normalizeVehicles();
