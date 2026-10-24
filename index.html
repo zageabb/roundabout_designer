@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.0</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.1</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -14,7 +14,7 @@
 <div class="row"><label for="incoming">Entry lanes</label><input id="incoming" type="number" min="1" max="6"></div>
 <div class="row"><label for="outgoing">Exit lanes</label><input id="outgoing" type="number" min="1" max="6"></div>
 <p class="muted">Entry lanes numbered from the driver's left to right while approaching the junction.</p><div id="lanes"></div><div class="section"><h2>Permitted movements</h2><div id="connections" class="muted"></div><p id="networkNotice" class="muted"></p></div></div>
-<div class="section"><h2>Vehicles A & B</h2><p class="muted">Choose approach, entry/exit and lane.</p><div id="vehicles"></div><div class="row"><label for="playSpeed">Playback speed (degrees/sec)</label><input id="playSpeed" type="number" min="1" max="90" step="5" value="20"></div><div class="buttons"><button id="playCars" class="primary">Play</button><button id="pauseCars">Pause</button><button id="stepCars">Step +5°</button></div><p class="muted">Playback moves circulating vehicles only. No traffic priority or collision model yet.</p></div><div class="section"><h2>Project</h2><div class="buttons">
+<div class="section"><h2>Vehicles A & B</h2><p class="muted">Choose approach, entry/exit and lane.</p><div id="vehicles"></div><div id="proximity" class="status" role="status">Place both vehicles on circulating lanes to monitor their spacing.</div><div class="row"><label for="playSpeed">Playback speed (degrees/sec)</label><input id="playSpeed" type="number" min="1" max="90" step="5" value="20"></div><div class="buttons"><button id="playCars" class="primary">Play</button><button id="pauseCars">Pause</button><button id="stepCars">Step +5°</button></div><p class="muted">Playback moves circulating vehicles only. No traffic priority or collision model yet.</p></div><div class="section"><h2>Project</h2><div class="buttons">
 <button id="save" class="primary">Export SVG</button><button id="png">Export PNG</button><button id="json">Save JSON</button><button id="load">Load JSON</button><button id="reset">Reset defaults</button></div>
 <input id="file" type="file" accept=".json,application/json" hidden></div>
 <p class="warning">Concept-layout tool, not a certified road design. The schematic shows lane counts, directions, circulation and give-way lines. It does not validate swept paths, weaving distances, signage or DMRB design compliance.</p>
@@ -25,7 +25,7 @@ const moves=['L','S','R','LS','SR','LR','LSR'];
 const labels={L:'Left only',S:'Straight only',R:'Right only',LS:'Left + straight',SR:'Straight + right',LR:'Left + right',LSR:'Left + straight + right'};
 let state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,arms:structuredClone(presets)};
 let active='North';
-const defaultVehicles=()=>({A:{arm:'North',side:'entry',lane:1},B:{arm:'South',side:'exit',lane:1}});
+const defaultVehicles=()=>({A:{arm:'North',side:'entry',lane:1,speed:20},B:{arm:'South',side:'exit',lane:1,speed:15}});
 state.vehicles=defaultVehicles();
 let playback=false,playbackFrame=null,previousFrame=null;
 function normalizeVehicles(){
@@ -35,6 +35,7 @@ function normalizeVehicles(){
  v.arm=['North','East','South','West'].includes(v.arm)?v.arm:'North';
  v.side=['entry','exit','circulating'].includes(v.side)?v.side:'entry';
  v.angle=((Number(v.angle??45)%360)+360)%360;
+ v.speed=Math.max(0,Math.min(90,Number(v.speed??20)||0));
  const limit=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='entry'?'in':'out'];
  v.lane=Math.max(1,Math.min(limit,Math.floor(Number(v.lane)||1)));
  state.vehicles[id]=v;
@@ -49,7 +50,7 @@ function stopPlayback(){
 function advanceVehicles(delta){
  for(const id of ['A','B']){
  const v=state.vehicles[id];
- if(v.side==='circulating')v.angle=(v.angle+delta+360)%360;
+ if(v.side==='circulating')v.angle=(v.angle+delta*v.speed/20+360)%360;
  }
  draw();
  $('vehicles').querySelectorAll('input[data-field="angle"]').forEach(el=>{
@@ -74,12 +75,12 @@ function renderVehicles(){
  return '<strong>Vehicle '+id+'</strong><div class="row">'+
  '<select data-vehicle="'+id+'" data-field="arm" '+(v.side==='circulating'?'disabled':'')+'>'+['North','East','South','West'].map(x=>'<option '+(x===v.arm?'selected ':'')+'value="'+x+'">'+x+'</option>').join('')+'</select>'+
  '<select data-vehicle="'+id+'" data-field="side"><option value="entry" '+(v.side==='entry'?'selected':'')+'>Entry</option><option value="exit" '+(v.side==='exit'?'selected':'')+'>Exit</option><option value="circulating" '+(v.side==='circulating'?'selected':'')+'>Roundabout</option></select>'+
- '<select data-vehicle="'+id+'" data-field="lane">'+Array.from({length:n},(_,i)=>'<option value="'+(i+1)+'" '+(v.lane===i+1?'selected':'')+'>Lane '+(i+1)+'</option>').join('')+'</select></div>'+(v.side==='circulating'?'<div class="row"><label>Angle clockwise from North</label><input type="range" min="0" max="355" step="5" style="width:100%;min-width:130px" data-vehicle="'+id+'" data-field="angle" value="'+Math.round(v.angle)+'"><output>'+Math.round(v.angle)+'°</output><button type="button" data-nudge="-1" data-vehicle="'+id+'">−1°</button><button type="button" data-nudge="1" data-vehicle="'+id+'">+1°</button></div>':'');
+ '<select data-vehicle="'+id+'" data-field="lane">'+Array.from({length:n},(_,i)=>'<option value="'+(i+1)+'" '+(v.lane===i+1?'selected':'')+'>Lane '+(i+1)+'</option>').join('')+'</select></div>'+(v.side==='circulating'?'<div class="row"><label>Angle clockwise from North</label><input type="range" min="0" max="355" step="5" style="width:100%;min-width:130px" data-vehicle="'+id+'" data-field="angle" value="'+Math.round(v.angle)+'"><output>'+Math.round(v.angle)+'°</output><button type="button" data-nudge="-1" data-vehicle="'+id+'">−1°</button><button type="button" data-nudge="1" data-vehicle="'+id+'">+1°</button><div class="row"><label>Vehicle speed (°/s)</label><input type="number" min="0" max="90" step="5" data-vehicle="'+id+'" data-field="speed" value="'+v.speed+'"></div></div>':'');
  }).join('');
  $('vehicles').querySelectorAll('select,input').forEach(el=>{el.onchange=()=>{
  const v=state.vehicles[el.dataset.vehicle];
  if(el.dataset.field==='side'&&el.value==='circulating'&&v.side!=='circulating')v.angle=45;
- v[el.dataset.field]=['lane','angle'].includes(el.dataset.field)?Number(el.value):el.value;
+ v[el.dataset.field]=['lane','angle','speed'].includes(el.dataset.field)?Number(el.value):el.value;
  stopPlayback();normalizeVehicles();renderVehicles();draw();
  };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';stopPlayback();draw()};});
  $('vehicles').querySelectorAll('button[data-nudge]').forEach(btn=>btn.onclick=()=>{
@@ -164,8 +165,18 @@ function movementArrow(x,y,movement,scale=1){
  // Unselected straight direction does not get an arrowhead.
  return '<g transform="translate('+x+' '+y+') scale('+scale+')" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+p.join(' ')+'"/></g>';
 }
+function proximityWarning(){
+ const a=state.vehicles.A,b=state.vehicles.B,notice=$('proximity');if(!notice)return;
+ if(a.side!=='circulating'||b.side!=='circulating'){notice.textContent='Place both vehicles on circulating lanes to monitor spacing.';return}
+ if(a.lane!==b.lane){notice.textContent='A and B are circulating in different lanes. No same-lane spacing alert.';return}
+ const difference=Math.abs(a.angle-b.angle),separation=Math.min(difference,360-difference);
+ const radius=state.diameter*3.1+(state.circulating-a.lane+.5)*state.width*state.displayScale;
+ const gap=separation*Math.PI/180*radius/state.displayScale;
+ notice.textContent=gap<8?'Proximity warning: A and B are approximately '+gap.toFixed(1)+' m apart in the same lane.':'Same-lane spacing: approximately '+gap.toFixed(1)+' m.';
+}
 function draw(){
  normalizeVehicles();
+ proximityWarning();
  const issues=validateNetwork(state);if(issues.length){updateStatus(issues.join('; '));return}
  const w=state.width*state.displayScale, inner=state.diameter*3.1, outer=inner+state.circulating*w;
  const join=outer-18, end=Math.max(490,outer+245);
