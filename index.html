@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v0.1</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v0.2</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -54,62 +54,67 @@ function movementArrow(x,y,movement,scale=1){
  return '<g transform="translate('+x+' '+y+') scale('+scale+')" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+p.join(' ')+'"/></g>';
 }
 function draw(){
- const N=state.circulating, w=state.width*8, inner=state.diameter*3.1, outer=inner+N*w;
- const start=outer-5,end=505, size=1120, c=size/2;
- let svg='<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1120" role="img" aria-label="UK clockwise roundabout with configurable lanes"><rect width="1120" height="1120" fill="#e9f2e5"/>';
- svg+='<g transform="translate('+c+' '+c+')">';
- // Rotated road arms: South is the canonical arm. Its entry is on the west (left).
- for(const [name,rot] of [['South',0],['East',90],['North',180],['West',270]]){
-  const a=state.arms[name], ei=a.in*w, eo=a.out*w;
-  svg+='<g transform="rotate('+rot+')">';
-  // Outbound carriageway lies right of the splitter when viewed from the south.
-  svg+='<path d="M '+(-ei)+' '+(start)+' L '+(-ei)+' '+end+' L '+eo+' '+end+' L '+eo+' '+start+' Z" fill="#464c50" stroke="#fefefe" stroke-width="3"/>';
-  // Splitter island at the middle of the carriageways, widened locally for legibility.
-  svg+='<path d="M -3 '+(start+10)+' Q -10 '+(start+65)+' -7 '+(start+92)+' L -5 '+end+' L 5 '+end+' L 7 '+(start+92)+' Q 10 '+(start+65)+' 3 '+(start+10)+' Z" fill="#c7d7b6" stroke="#e9ede5" stroke-width="2"/>';
-  for(let i=1;i<a.in;i++){let x=-ei+i*w;svg+=line(x,start+12,x,end,'#e7eaea',2,'14 12')}
-  for(let i=1;i<a.out;i++){let x=i*w;svg+=line(x,start+12,x,end,'#e7eaea',2,'14 12')}
-  // UK driving: inbound (approaching centre) on left half; outbound on right half.
-  svg+=line(-ei,start+13,-7,start+13,'#fff',4,'10 6');
-  for(let i=0;i<a.in;i++){
-   const x=-ei+(i+.5)*w;
-   svg+=text(x,start+92,String(i+1),Math.min(16,w*.45),'#ffd28c');
-   svg+=movementArrow(x,start+154,a.moves[i],Math.min(1,w/36));
-  }
-  for(let i=0;i<a.out;i++){
-   const x=(i+.5)*w;
-   svg+=line(x,start+145,x,start+175,'#fff',3);
-   svg+='<path d="M '+(x-5)+' '+(start+167)+' L '+x+' '+(start+178)+' L '+(x+5)+' '+(start+167)+'" fill="none" stroke="white" stroke-width="3"/>';
-  }
-  svg+='</g>';
+ const w=state.width*8, inner=state.diameter*3.1, outer=inner+state.circulating*w;
+ const end=490, join=outer-18, radius=outer+10;
+ let svg='<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1120" role="img" aria-label="UK left-driving clockwise roundabout"><rect width="1120" height="1120" fill="#e9f2e5"/><g transform="translate(560 560)">';
+ // Carriageway under all connecting approach roads.
+ svg+='<circle r="'+outer+'" fill="#454c51"/>';
+ const arms=[['South',0],['East',90],['North',180],['West',270]];
+ for(const [name,rot] of arms){
+   const a=state.arms[name],ei=a.in*w,eo=a.out*w,flare=Math.min(w/2,16);
+   svg+='<g transform="rotate('+rot+')">';
+   // British layout: inbound on driver's left = local negative x.
+   // Separate lanes flare into the circulating carriageway; no wall at entry.
+   svg+='<path d="M '+(-ei-flare)+' '+join+' Q '+(-ei-4)+' '+(join+70)+' '+(-ei)+' '+(join+118)+' L '+(-ei)+' '+end+' L -7 '+end+' L -7 '+(join+90)+' Q -5 '+(join+45)+' -4 '+join+' Z" fill="#454c51"/>';
+   svg+='<path d="M 4 '+join+' Q 5 '+(join+45)+' 7 '+(join+90)+' L 7 '+end+' L '+eo+' '+end+' L '+eo+' '+(join+118)+' Q '+(eo+4)+' '+(join+70)+' '+(eo+flare)+' '+join+' Z" fill="#454c51"/>';
+   svg+='<path d="M '+(-ei-flare)+' '+join+' Q '+(-ei-4)+' '+(join+70)+' '+(-ei)+' '+(join+118)+' L '+(-ei)+' '+end+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
+   svg+='<path d="M '+(eo+flare)+' '+join+' Q '+(eo+4)+' '+(join+70)+' '+eo+' '+(join+118)+' L '+eo+' '+end+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
+   // Tapered splitter physically separates entry and exit traffic.
+   svg+='<path d="M 0 '+(join+29)+' Q -9 '+(join+65)+' -9 '+(join+112)+' L -8 '+end+' L 8 '+end+' L 9 '+(join+112)+' Q 9 '+(join+65)+' 0 '+(join+29)+' Z" fill="#b8cda9" stroke="#edf0e8" stroke-width="2"/>';
+   for(let i=1;i<a.in;i++)svg+=line(-ei+i*w,join+65,-ei+i*w,end,'#e3e8e9',2,'13 11');
+   for(let i=1;i<a.out;i++)svg+=line(i*w,join+65,i*w,end,'#e3e8e9',2,'13 11');
+   // Give-way line is drawn only across the entering lanes.
+   svg+=line(-ei-flare*.55,join+30,-10,join+30,'white',4,'10 7');
+   for(let i=0;i<a.in;i++){
+     const x=-ei+(i+.5)*w;
+     svg+=text(x,join+105,String(i+1),Math.min(15,w*.47),'#ffcf87');
+     svg+=movementArrow(x,join+161,a.moves[i],Math.min(1,w/36));
+   }
+   for(let i=0;i<a.out;i++){
+     const x=(i+.5)*w;
+     svg+=line(x,join+145,x,join+175,'white',3);
+     svg+='<path d="M '+(x-5)+' '+(join+165)+' L '+x+' '+(join+176)+' L '+(x+5)+' '+(join+165)+'" fill="none" stroke="white" stroke-width="3"/>';
+   }
+   svg+='</g>';
  }
- // roundabout annulus: render above approach ends.
- svg+='<circle r="'+(outer+1)+'" fill="#4b5156"/>';
- // Four separate kerb arcs leave actual gaps where roads join the roundabout.
- const maxRoad=Math.max(...Object.values(state.arms).map(a=>Math.max(a.in,a.out)*w));
- const mouth=Math.asin(Math.min(.75,(maxRoad+20)/(outer+1)))*180/Math.PI;
- for(let direction=0;direction<360;direction+=90){
-   const from=(direction+mouth)*Math.PI/180,to=(direction+90-mouth)*Math.PI/180;
-   svg+='<path d="M '+((outer+1)*Math.sin(from))+' '+(-(outer+1)*Math.cos(from))+
-      ' A '+(outer+1)+' '+(outer+1)+' 0 0 1 '+((outer+1)*Math.sin(to))+' '+(-(outer+1)*Math.cos(to))+
-      '" fill="none" stroke="#f8fafb" stroke-width="4"/>';
+ // Curbed central island, not a solid ring covering the entries.
+ svg+='<circle r="'+inner+'" fill="#8aaa7e" stroke="#d8dfd3" stroke-width="8"/>';
+ for(let k=1;k<state.circulating;k++){
+   const r=inner+k*w;
+   // Omit centreline marks at entry/exit mouths.
+   for(let q=0;q<4;q++){
+     const gap=Math.asin(Math.min(.7,(2*w+14)/r));
+     const a=q*Math.PI/2+gap,b=(q+1)*Math.PI/2-gap;
+     if(a<b)svg+='<path d="M '+(r*Math.sin(a))+' '+(-r*Math.cos(a))+' A '+r+' '+r+' 0 0 1 '+(r*Math.sin(b))+' '+(-r*Math.cos(b))+'" fill="none" stroke="#e7eaeb" stroke-width="2" stroke-dasharray="14 12"/>';
+   }
  }
- svg+='<circle r="'+inner+'" fill="#85ab77" stroke="#d7ded1" stroke-width="9"/>';
- for(let k=1;k<N;k++)svg+='<circle r="'+(inner+k*w)+'" fill="none" stroke="#e5e8e9" stroke-width="2" stroke-dasharray="19 13"/>';
- // clockwise curved travel direction tangents (screen coordinates: clockwise)
- for(let angle=20;angle<360;angle+=45){
-  const rad=angle*Math.PI/180,r=inner+w*Math.max(.5,(N-.5)/2),x=r*Math.sin(rad),y=-r*Math.cos(rad),a=angle*Math.PI/180;
-  svg+='<g transform="translate('+x+' '+y+') rotate('+(angle-90)+')">'+line(0,-10,0,12,'#fff',3)+'<path d="M -7 5 L 0 15 L 7 5" fill="none" stroke="#fff" stroke-width="3"/></g>';
+ // The outer edge appears only between entry/exit mouths.
+ for(let q=0;q<4;q++){
+   const gap=Math.asin(Math.min(.78,(Math.max(...Object.values(state.arms).map(a=>Math.max(a.in,a.out)))*w+14)/outer));
+   const a=q*Math.PI/2+gap,b=(q+1)*Math.PI/2-gap;
+   if(a<b)svg+='<path d="M '+(outer*Math.sin(a))+' '+(-outer*Math.cos(a))+' A '+outer+' '+outer+' 0 0 1 '+(outer*Math.sin(b))+' '+(-outer*Math.cos(b))+'" fill="none" stroke="#eef1ed" stroke-width="4"/>';
  }
- svg+=text(0,-18,'UK',26,'#234c36');svg+=text(0,13,N+' circulating lanes',14,'#234c36');
- // Give-way lines, on approach side of each arm, in front of roundabout.
- for(const [name,rot] of [['South',0],['East',90],['North',180],['West',270]]){
-  const a=state.arms[name], ei=a.in*w;
-  svg+='<g transform="rotate('+rot+')">'+line(-ei,outer+7,-8,outer+7,'#fff',4,'11 7')+'</g>';
+ // The direction tangents are clockwise on the screen; keep them distinct
+ // from the per-lane permitted movement arrows.
+ for(let deg=40;deg<360;deg+=90){
+   const rad=deg*Math.PI/180,r=inner+(state.circulating-.5)*w/2;
+   const x=r*Math.sin(rad),y=-r*Math.cos(rad);
+   svg+='<g transform="translate('+x+' '+y+') rotate('+(-deg)+')">'+line(0,-12,0,12,'#fff',3)+'<path d="M -6 4 L 0 14 L 6 4" fill="none" stroke="#fff" stroke-width="3"/></g>';
  }
- 
- // Labels belong to the map, not to a rotated arm group: always horizontal.
- for(const [name,x,y] of [['North',0,-528],['South',0,528],['East',528,0],['West',-528,0]]){
-   svg+=text(x,y,name.toUpperCase(),20,'#154968');
+ svg+=text(0,-17,'UK',25,'#234b35')+text(0,14,state.circulating+' circulating lanes',13,'#234b35');
+ // Labels are NOT children of the rotated arms.
+ for(const [name,x,y] of [['North',0,-530],['South',0,530],['East',530,0],['West',-530,0]]){
+   svg+=text(x,y,name.toUpperCase(),19,'#174862');
  }
  svg+='</g></svg>';
  $('view').innerHTML=svg;
