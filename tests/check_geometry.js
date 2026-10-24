@@ -2,7 +2,7 @@
 const fs=require('node:fs');
 const vm=require('node:vm');
 const assert=require('node:assert/strict');
-const html=fs.readFileSync('index.html','utf8');
+const html=require('./read_app').readAppSource();
 const first=html.indexOf('function roadSurfaceGeometry(config,outer,end){');
 const last=html.indexOf('function draw(){',first);
 assert(first>0 && last>first,'Road geometry function missing');
