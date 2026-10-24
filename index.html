@@ -210,7 +210,7 @@ function advanceVehicles(delta){
  if(v.side==='circulating'){
   const increment=increments[id];
   if(v.exitArm&&v.exitArm!=='none'&&crossesClockwiseAngle(v.angle,increment,circularExitStart(v.exitArm,state))){
-   v.angle=circularExitStart(v.exitArm);v.side='exiting';v.exitProgress=0;renderVehicles();
+   v.angle=circularExitStart(v.exitArm,state);v.side='exiting';v.exitProgress=0;renderVehicles();
   }else v.angle=(v.angle+increment+360)%360;
  }else if(v.side==='exiting'){
   v.exitProgress=Math.min(1,v.exitProgress+delta*Math.max(0,v.speed/20)/55);
