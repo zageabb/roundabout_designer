@@ -75,4 +75,9 @@ assert "nearestDegrees*metresPerDegree<8" in html
 assert "headway/c.closing" in html
 assert "Vehicle '+id+' speed (°/s)" in html
 assert "data-field=\"speed\"" in html
-print("UK layout, playback, closing speed and headway source checks passed.")
+assert "function safeAdvance(delta)" in html
+assert "state.drivingMode!=='safe'" in html
+assert "gapDegrees=state.minGap" in html
+assert 'id="drivingMode"' in html
+assert 'id="minGap"' in html
+print("Roundabout playback modes and separation-guard source checks passed.")
