@@ -1,6 +1,6 @@
 // End-to-end unit checks for replay snapshots, traces and scenario telemetry.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const html=fs.readFileSync('index.html','utf8');
+const html=require('./read_app').readAppSource();
 function section(a,b){const i=html.indexOf(a),j=html.indexOf(b,i);assert(i>=0&&j>i,'Missing '+a);return html.slice(i,j)}
 const ui={runSummary:{textContent:''},runEvents:{textContent:'',innerHTML:''},playSpeed:{value:20}};
 const state={circulating:3,diameter:38,width:4,displayScale:9.5,showTrails:true,arms:{
