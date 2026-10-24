@@ -344,11 +344,11 @@ function renderVehicles(){
  if(el.dataset.field==='lane'&&v.side==='entry')v.targetLane=Math.min(state.circulating,Number(el.value));
  v[el.dataset.field]=el.dataset.field==='overrideExitRules'?el.checked:['lane','angle','speed','targetLane','exitLane'].includes(el.dataset.field)?Number(el.value):el.value;
  if((el.dataset.field==='lane'||el.dataset.field==='arm')&&v.side==='entry'){v.entryLane=v.lane;v.exitArm=undefined}
- stopPlayback();normalizeVehicles();renderVehicles();draw();
- };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';stopPlayback();draw()};});
+ stopPlayback();clearScenario();normalizeVehicles();renderVehicles();draw();
+ };if(el.dataset.field==='angle')el.oninput=()=>{state.vehicles[el.dataset.vehicle].angle=Number(el.value);el.parentElement.querySelector('output').textContent=el.value+'°';stopPlayback();clearScenario();draw()};});
  $('vehicles').querySelectorAll('button[data-nudge]').forEach(btn=>btn.onclick=()=>{
  const v=state.vehicles[btn.dataset.vehicle];
- stopPlayback();v.angle=(v.angle+Number(btn.dataset.nudge)+360)%360;
+ stopPlayback();clearScenario();v.angle=(v.angle+Number(btn.dataset.nudge)+360)%360;
  renderVehicles();draw();
  });
 }
@@ -361,7 +361,7 @@ function renderControls(){
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.arm;renderControls()});
  const a=state.arms[active];$('incoming').value=a.in;$('outgoing').value=a.out;
  $('lanes').innerHTML=a.moves.map((m,i)=>'<div class="lane"><label>Lane '+(i+1)+'</label><select data-lane="'+i+'">'+moves.map(x=>'<option value="'+x+'"'+(x===m?' selected':'')+'>'+labels[x]+'</option>').join('')+'</select></div>').join('');
- $('lanes').querySelectorAll('select').forEach(s=>s.onchange=()=>{a.moves[+s.dataset.lane]=s.value;draw();renderConnectivity()});renderConnectivity();renderVehicles();
+ $('lanes').querySelectorAll('select').forEach(s=>s.onchange=()=>{stopPlayback();clearScenario();a.moves[+s.dataset.lane]=s.value;renderVehicles();draw();renderConnectivity()});renderConnectivity();renderVehicles();
 }
 function routeDestination(origin,movement){
  const directions=['North','East','South','West'];
@@ -403,7 +403,7 @@ function renderConnectivity(){
  connections.map(c=>'<div>Entry '+c.lane+' · '+labels[c.movement]+' → '+c.destination+' (circulating '+c.circulatingLane+', exit '+c.exitLane+')</div>').join('');
  $('networkNotice').textContent=issues.length?issues.join(' · '):'Provisional mapping only — actual merging, lane changing and spiral alignment not verified.';
 }
-function inputValue(id,min,max,step,cb){$(id).addEventListener('change',()=>{const v=clamp(Number($(id).value)||min,min,max);cb(step?Math.round(v/step)*step:v);renderControls();draw()})}
+function inputValue(id,min,max,step,cb){$(id).addEventListener('change',()=>{const v=clamp(Number($(id).value)||min,min,max);stopPlayback();clearScenario();cb(step?Math.round(v/step)*step:v);renderControls();draw()})}
 inputValue('circulating',1,5,1,v=>state.circulating=v);
 inputValue('diameter',12,85,1,v=>state.diameter=v);
 inputValue('width',2.5,5,.1,v=>state.width=v);
@@ -414,8 +414,8 @@ inputValue('incoming',1,6,1,v=>{const a=state.arms[active];a.in=v;while(a.moves.
 inputValue('outgoing',1,6,1,v=>state.arms[active].out=v);
 $('drivingMode').value=state.drivingMode;
 $('minGap').value=state.minGap;
-$('drivingMode').onchange=()=>{state.drivingMode=$('drivingMode').value;draw()};
-$('minGap').onchange=()=>{state.minGap=Math.max(2,Math.min(30,Number($('minGap').value)||8));$('minGap').value=state.minGap;draw()};
+$('drivingMode').onchange=()=>{stopPlayback();clearScenario();state.drivingMode=$('drivingMode').value;draw()};
+$('minGap').onchange=()=>{stopPlayback();clearScenario();state.minGap=Math.max(2,Math.min(30,Number($('minGap').value)||8));$('minGap').value=state.minGap;draw()};
 $('playCars').onclick=()=>{if(playback)return;playback=true;previousFrame=null;$('playCars').textContent='Playing';playbackFrame=requestAnimationFrame(playbackTick)};
 $('pauseCars').onclick=stopPlayback;
 $('replayCars').onclick=replayScenario;
@@ -621,8 +621,8 @@ function download(name,content,type){const blob=new Blob([content],{type});const
 $('save').onclick=()=>download('roundabout.svg',$('diagram').outerHTML,'image/svg+xml');
 $('json').onclick=()=>download('roundabout.json',JSON.stringify(state,null,2),'application/json');
 $('png').onclick=()=>{const src=new XMLSerializer().serializeToString($('diagram'));const url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=2240;canvas.height=2240;canvas.getContext('2d').drawImage(img,0,0,2240,2240);canvas.toBlob(b=>{if(b){const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='roundabout.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}URL.revokeObjectURL(url)},'image/png')};img.onerror=()=>updateStatus('PNG export failed; SVG export remains available.');img.src=url};
-$('reset').onclick=()=>{stopPlayback();state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,showTrails:true,vehicles:defaultVehicles(),drivingMode:'safe',minGap:8,arms:structuredClone(presets)};active='North';$('drivingMode').value=state.drivingMode;$('minGap').value=state.minGap;renderControls();draw();updateStatus('Reset to the requested UK lane configuration.')};
+$('reset').onclick=()=>{stopPlayback();clearScenario();state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,showTrails:true,vehicles:defaultVehicles(),drivingMode:'safe',minGap:8,arms:structuredClone(presets)};active='North';$('drivingMode').value=state.drivingMode;$('minGap').value=state.minGap;renderControls();draw();updateStatus('Reset to the requested UK lane configuration.')};
 $('load').onclick=()=>$('file').click();
-$('file').onchange=async e=>{stopPlayback();try{const obj=JSON.parse(await e.target.files[0].text());if(!obj.arms||!['North','East','South','West'].every(x=>obj.arms[x]?.moves?.length===obj.arms[x]?.in))throw Error('Invalid approach data');if(validateNetwork(obj).length)throw Error(validateNetwork(obj).join('; '));state={circulating:clamp(+obj.circulating||3,1,5),diameter:clamp(+obj.diameter||38,12,85),width:clamp(+obj.width||4,2.5,5),displayScale:clamp(+obj.displayScale||9.5,8,14),laneNumbers:obj.laneNumbers!==false,showRoutes:obj.showRoutes===true,showTrails:obj.showTrails!==false,vehicles:obj.vehicles||defaultVehicles(),drivingMode:obj.drivingMode==='unrestricted'?'unrestricted':'safe',minGap:Math.max(2,Math.min(30,Number(obj.minGap)||8)),arms:obj.arms};$('drivingMode').value=state.drivingMode;$('minGap').value=state.minGap;renderControls();draw();updateStatus('Configuration loaded.')}catch(err){updateStatus('Could not import JSON: '+err.message)}e.target.value=''};
+$('file').onchange=async e=>{stopPlayback();try{const obj=JSON.parse(await e.target.files[0].text());if(!obj.arms||!['North','East','South','West'].every(x=>obj.arms[x]?.moves?.length===obj.arms[x]?.in))throw Error('Invalid approach data');if(validateNetwork(obj).length)throw Error(validateNetwork(obj).join('; '));state={circulating:clamp(+obj.circulating||3,1,5),diameter:clamp(+obj.diameter||38,12,85),width:clamp(+obj.width||4,2.5,5),displayScale:clamp(+obj.displayScale||9.5,8,14),laneNumbers:obj.laneNumbers!==false,showRoutes:obj.showRoutes===true,showTrails:obj.showTrails!==false,vehicles:obj.vehicles||defaultVehicles(),drivingMode:obj.drivingMode==='unrestricted'?'unrestricted':'safe',minGap:Math.max(2,Math.min(30,Number(obj.minGap)||8)),arms:obj.arms};clearScenario();$('showTrails').checked=state.showTrails;$('drivingMode').value=state.drivingMode;$('minGap').value=state.minGap;renderControls();draw();updateStatus('Configuration loaded.')}catch(err){updateStatus('Could not import JSON: '+err.message)}e.target.value=''};
 renderControls();renderScenarioActivity();draw();
 </script></body></html>
