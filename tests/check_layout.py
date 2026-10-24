@@ -96,7 +96,8 @@ assert "const r=outer-(v.targetLane-.5)*w" in html
 assert "Circulating destination lane" in html
 assert "Number(v.targetLane??v.lane)" in html
 assert "v.targetLane=Math.min(state.circulating,Number(el.value))" in html
-assert "const mouth=join-45, shoulder=join+122" in html
+assert "const shoulder=join+122, sweep=Math.PI*.22" in html
 assert "Rounded splitter nose blends" in html
 assert "const leftEdge=" in html and "const rightEdge=" in html
+assert "outer*Math.sin(sweep)" in html
 print("Rounded approach mouths, splitter islands and merge controls checked.")
