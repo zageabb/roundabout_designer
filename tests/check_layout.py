@@ -7,7 +7,7 @@ html = Path("index.html").read_text()
 assert "['South',0],['West',90],['North',180],['East',270]" in html
 for name, inbound, outbound, moves in (
     ("North", 3, 2, "LS','S','R"),
-    ("East", 3, 2, "L','LS','SR"),
+    ("East", 3, 2, "LS','S','SR"),
     ("South", 4, 2, "L','LS','S','R"),
     ("West", 3, 2, "LS','S','R"),
 ):
@@ -31,7 +31,7 @@ directions = ["North", "East", "South", "West"]
 offset = {"L": 1, "S": 2, "R": 3}
 presets = {
  "North": ["LS", "S", "R"],
- "East": ["L", "LS", "SR"],
+ "East": ["LS", "S", "SR"],
  "South": ["L", "LS", "S", "R"],
  "West": ["LS", "S", "R"],
 }
@@ -43,6 +43,9 @@ paths = [
 ]
 assert len(paths) == 18
 assert ("East", 1, "L", "South") in paths
+assert ("East", 1, "S", "West") in paths
+assert ("East", 2, "S", "West") in paths
+assert ("East", 2, "L", "South") not in paths
 assert ("North", 3, "R", "West") in paths
 assert ("South", 4, "R", "East") in paths
 assert "function provisionalLaneMapping(config)" in html
