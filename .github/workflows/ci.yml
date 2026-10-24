@@ -19,6 +19,8 @@ jobs:
         run: node tests/check_scenario.js
       - name: Verify modular source order and browser assets
         run: node tests/check_modules.js
+      - name: Smoke-test modular browser startup and playback
+        run: node tests/check_runtime.js
       - name: Check browser JavaScript syntax
         run: |
           for file in src/*.js; do node --check "$file"; done
