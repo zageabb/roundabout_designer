@@ -39,4 +39,13 @@ assert.notEqual(JSON.stringify(app.state.vehicles),first,'Playback moves an ente
 elements.replayCars.onclick();
 assert.equal(JSON.stringify(app.state.vehicles),first,'Replay restores original positions');
 assert(elements.runSummary.textContent.includes('Elapsed 0.0 s'));
+// A road edit that removes an approach lane must not leave a stale lane ID
+// in the route preview or crash the scenario controls.
+app.state.vehicles.A={arm:'East',side:'entry',lane:3,targetLane:3,speed:20,exitArm:'West',entryLane:3,progress:0};
+app.state.arms.East.in=1;app.state.arms.East.moves=['S'];
+app.normalizeVehicles();
+assert.equal(app.state.vehicles.A.lane,1);
+assert.equal(app.state.vehicles.A.entryLane,1);
+app.renderControls();
+assert.match(elements.vehicles.innerHTML,/Lane path: East entry 1/);
 console.log('Browser startup, SVG render, controls, playback and replay smoke-test passed.');
