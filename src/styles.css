@@ -3,3 +3,6 @@
 
 /* Junction-independent route intent: deliberately secondary to vehicle controls. */
 .vehicle-route{font-size:12px;color:#315875;border-top:1px dashed #d2e0e8;padding-top:8px;margin:9px 0 3px;line-height:1.5}
+
+/* Prediction preview does not determine collision or liability. */
+#projectedConflict{margin:8px 0;line-height:1.5}#projectedConflict.conflict-warning{background:#fff2e1;color:#77470c}#projectedConflict.conflict-spatial{background:#eaf5fb;color:#235672}
