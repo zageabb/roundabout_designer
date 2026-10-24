@@ -48,4 +48,17 @@ assert.equal(app.state.vehicles.A.lane,1);
 assert.equal(app.state.vehicles.A.entryLane,1);
 app.renderControls();
 assert.match(elements.vehicles.innerHTML,/Lane path: East entry 1/);
+// The full UI should expose a geometric warning and (when enabled) the
+// corresponding marker, without interfering with legacy safe following.
+app.state.arms.East.in=3;app.state.arms.East.moves=['LS','S','SR'];
+app.state.vehicles.A={arm:'East',entryLane:1,side:'merging',lane:1,targetLane:1,mergeProgress:0,speed:20,exitArm:'South',exitLane:1,angle:90};
+app.state.vehicles.B={arm:'East',entryLane:2,side:'merging',lane:2,targetLane:1,mergeProgress:0,speed:20,exitArm:'West',exitLane:1,angle:90};
+app.state.showConflictZones=true;
+app.draw();
+assert.match(elements.projectedConflict.textContent,/Possible simultaneous path occupancy/);
+assert.match(elements.view.innerHTML,/Projected interaction location/);
+app.state.showConflictZones=false;
+app.draw();
+assert.doesNotMatch(elements.view.innerHTML,/Projected interaction location/);
+assert.match(elements.projectedConflict.textContent,/Possible simultaneous path occupancy/);
 console.log('Browser startup, SVG render, controls, playback and replay smoke-test passed.');
