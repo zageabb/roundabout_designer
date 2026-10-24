@@ -70,6 +70,8 @@ $('pauseCars').onclick=stopPlayback;
 $('replayCars').onclick=replayScenario;
 $('showTrails').checked=state.showTrails!==false;
 $('showTrails').onchange=()=>{state.showTrails=$('showTrails').checked;draw()};
+$('showConflictZones').checked=state.showConflictZones!==false;
+$('showConflictZones').onchange=()=>{state.showConflictZones=$('showConflictZones').checked;draw()};
 $('exportEvents').onclick=()=>{
  const rows=[['elapsed_seconds','vehicle','event','details'],...(runState?.events||[]).map(e=>[e.time.toFixed(3),e.vehicle,e.event,e.detail])];
  const content=rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');
