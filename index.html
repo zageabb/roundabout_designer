@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
 <style>
 :root{font:14px system-ui,-apple-system,Segoe UI,sans-serif;color:#1a2d42;background:#f0f4f8}*{box-sizing:border-box}body{margin:0}header{background:#143b59;color:white;padding:17px 22px}h1{font-size:21px;margin:0}header span{font-size:12px;color:#bfdae9}main{display:grid;grid-template-columns:335px minmax(0,1fr);gap:15px;padding:15px;max-width:1600px;margin:auto}.panel,.stage{background:white;border:1px solid #d5e2e9;border-radius:11px;padding:17px;box-shadow:0 2px 11px #102d4210}.panel h2{margin:0 0 13px;font-size:16px}.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}.row label{font-size:13px}.row input{width:84px}input,select{border:1px solid #b5c9d8;border-radius:6px;background:white;padding:7px;color:#173449}select{max-width:220px}button{border:1px solid #afc6d5;background:#fff;color:#14466a;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}button.on,button.primary{color:white;background:#176b9b;border-color:#176b9b}.tabs,.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tabs button{flex:1}.lane{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;margin:7px 0}.lane select{width:100%;max-width:none}.section{border-top:1px solid #dfebf0;margin-top:15px;padding-top:12px}.muted{font-size:12px;color:#607386;line-height:1.5}.stage svg{width:100%;height:auto;max-height:75vh;min-height:360px;display:block;background:#e9f2e5;border-radius:9px}.status{padding:9px 11px;border-radius:7px;background:#e5f3f9;color:#23526c;font-size:12px}.warning{background:#fff5df;color:#765521;padding:10px;border-radius:7px;font-size:12px;line-height:1.5}.stage h2{font-size:17px;margin:2px 0 12px}.simulation-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}.simulation-toolbar .buttons{margin:0}.simulation-toolbar button{min-width:76px}.legend{font-size:12px;color:#556f7e;margin:10px 0}a{color:#126397}@media(max-width:900px){main{grid-template-columns:1fr;padding:9px}.stage svg{max-height:none}header{padding:12px}}
-</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.8</span></h1></header>
+</style></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.9</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -302,14 +302,16 @@ function draw(){
  for(const [name,rot] of arms){
    const a=state.arms[name],ei=a.in*w,eo=a.out*w,flare=Math.min(w/2,16);
    svg+='<g transform="rotate('+rot+')">';
-   // British layout: inbound on driver's left = local negative x.
-   // Separate lanes flare into the circulating carriageway; no wall at entry.
-   svg+='<path d="M '+(-ei-flare)+' '+join+' Q '+(-ei-4)+' '+(join+70)+' '+(-ei)+' '+(join+118)+' L '+(-ei)+' '+end+' L -7 '+end+' L -7 '+(join+90)+' Q -5 '+(join+45)+' -4 '+join+' Z" fill="#454c51"/>';
-   svg+='<path d="M 4 '+join+' Q 5 '+(join+45)+' 7 '+(join+90)+' L 7 '+end+' L '+eo+' '+end+' L '+eo+' '+(join+118)+' Q '+(eo+4)+' '+(join+70)+' '+(eo+flare)+' '+join+' Z" fill="#454c51"/>';
-   svg+='<path d="M '+(-ei-flare)+' '+join+' Q '+(-ei-4)+' '+(join+70)+' '+(-ei)+' '+(join+118)+' L '+(-ei)+' '+end+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
-   svg+='<path d="M '+(eo+flare)+' '+join+' Q '+(eo+4)+' '+(join+70)+' '+eo+' '+(join+118)+' L '+eo+' '+end+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
-   // Tapered splitter physically separates entry and exit traffic.
-   svg+='<path d="M 0 '+(join+35)+' Q -9 '+(join+68)+' -11 '+(join+115)+' L -11 '+end+' L 11 '+end+' L 11 '+(join+115)+' Q 9 '+(join+68)+' 0 '+(join+35)+' Z" fill="#b8cda9" stroke="#edf0e8" stroke-width="2"/>';
+   // Rounded entry/exit mouths use a long eased flare rather than a sharp shoulder.
+   const mouth=join-45, shoulder=join+122, curve=join+35;
+   const leftEdge='M '+(-ei-flare-6)+' '+mouth+' C '+(-ei-flare-6)+' '+curve+' '+(-ei-2)+' '+(join+76)+' '+(-ei)+' '+shoulder+' L '+(-ei)+' '+end;
+   const rightEdge='M '+(eo+flare+6)+' '+mouth+' C '+(eo+flare+6)+' '+curve+' '+(eo+2)+' '+(join+76)+' '+eo+' '+shoulder+' L '+eo+' '+end;
+   svg+='<path d="'+leftEdge+' L -7 '+end+' L -7 '+shoulder+' C -7 '+(join+67)+' -5 '+(join+4)+' -4 '+mouth+' Z" fill="#454c51"/>';
+   svg+='<path d="M 4 '+mouth+' C 5 '+(join+4)+' 7 '+(join+67)+' 7 '+shoulder+' L 7 '+end+' L '+eo+' '+end+' L '+eo+' '+shoulder+' C '+(eo+2)+' '+(join+76)+' '+(eo+flare+6)+' '+curve+' '+(eo+flare+6)+' '+mouth+' Z" fill="#454c51"/>';
+   svg+='<path d="'+leftEdge+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
+   svg+='<path d="'+rightEdge+'" fill="none" stroke="#f0f1eb" stroke-width="3"/>';
+   // Rounded splitter nose blends into a constant-width central reservation.
+   svg+='<path d="M 0 '+(join+26)+' C -10 '+(join+44)+' -13 '+(join+90)+' -11 '+shoulder+' L -11 '+end+' L 11 '+end+' L 11 '+shoulder+' C 13 '+(join+90)+' 10 '+(join+44)+' 0 '+(join+26)+' Z" fill="#b8cda9" stroke="#edf0e8" stroke-width="2"/>';
    for(let i=1;i<a.in;i++)svg+=line(-ei+i*w,join+65,-ei+i*w,end,'#e3e8e9',2,'13 11');
    for(let i=1;i<a.out;i++)svg+=line(i*w,join+65,i*w,end,'#e3e8e9',2,'13 11');
    // Give-way line is drawn only across the entering lanes.
