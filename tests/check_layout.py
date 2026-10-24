@@ -83,7 +83,7 @@ assert 'id="minGap"' in html
 assert "function advanceEntries(delta)" in html
 assert "const entryAngles={North:0,East:90,South:180,West:270}" in html
 # Entry bearings correspond to the compass arms; the smooth curve ends 30 degrees clockwise.
-assert "const target=entryAngles[v.arm]" in html
+assert "target=entryAngles[v.arm]" in html
 assert "const behind=(target-other.angle+360)%360" in html
 assert "if(state.drivingMode==='safe'&&!entryGapClear(id))" in html
 assert "v.side='circulating';v.lane=v.targetLane" in html
