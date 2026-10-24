@@ -81,14 +81,17 @@ assert "gapDegrees=state.minGap" in html
 assert 'id="drivingMode"' in html
 assert 'id="minGap"' in html
 assert "function advanceEntries(delta)" in html
-assert "const entryAngles={North:45,East:135,South:225,West:315}" in html
-# Every entry should merge 45 degrees clockwise after its approach bearing.
+assert "const entryAngles={North:0,East:90,South:180,West:270}" in html
+# Entry bearings correspond to the compass arms; the smooth curve ends 30 degrees clockwise.
 assert "const target=entryAngles[v.arm]" in html
-assert "const approach=(target-c.angle+360)%360" in html
-assert "if(state.drivingMode==='safe'&&competing)" in html
-assert "v.side='circulating';v.lane=1" in html
+assert "const behind=(target-other.angle+360)%360" in html
+assert "if(state.drivingMode==='safe'&&!entryGapClear(id))" in html
+assert "v.side='circulating';v.lane=v.targetLane" in html
 assert 'class="simulation-toolbar"' in html
 assert html.index('class="simulation-toolbar"') < html.index('id="view"')
 assert html.count('id="playCars"') == 1
 assert html.count('id="pauseCars"') == 1
-print("Playback buttons are unique and above the live road diagram.")
+assert "function mergeGeometry(v,progress,config)" in html
+assert "const r=outer-(v.targetLane-.5)*w" in html
+assert "Merge into circulating lane" in html
+print("Layout, smooth merge paths, target-lane controls, and toolbar checks passed.")
