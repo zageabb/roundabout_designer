@@ -87,4 +87,8 @@ assert "const target=entryAngles[v.arm]" in html
 assert "const approach=(target-c.angle+360)%360" in html
 assert "if(state.drivingMode==='safe'&&competing)" in html
 assert "v.side='circulating';v.lane=1" in html
-print("Roundabout entry advance, optional give-way, and vehicle playback checks passed.")
+assert 'class="simulation-toolbar"' in html
+assert html.index('class="simulation-toolbar"') < html.index('id="view"')
+assert html.count('id="playCars"') == 1
+assert html.count('id="pauseCars"') == 1
+print("Playback buttons are unique and above the live road diagram.")
