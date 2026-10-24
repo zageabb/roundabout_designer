@@ -33,7 +33,15 @@ function allowedExitArms(v,config){
  const lanes=config.arms[v.arm],lane=Math.min(lanes.in,Math.max(1,Math.floor(v.entryLane||v.lane||1)));
  return [...new Set((lanes.moves[lane-1]||'S').split('').map(turn=>routeDestination(v.arm,turn)))];
 }
-function circularExitStart(destination){return (entryAngles[destination]+360-28)%360}
+function exitSweep(destination,config){
+ const w=config.width*config.displayScale,outer=config.diameter*3.1+config.circulating*w;
+ const end=Math.max(490,outer+245);
+ const p=roadSurfaceGeometry(config,outer,end).mouths[destination].exit.start;
+ return Math.min(.8,Math.max(.48,Math.atan2(p[0],p[1])+.055));
+}
+function circularExitStart(destination,config){
+ return (entryAngles[destination]+360-exitSweep(destination,config)*180/Math.PI)%360;
+}
 function crossesClockwiseAngle(before,step,target){
  const forward=(target-before+360)%360;
  return step>0 && forward<=step+1e-7;
@@ -139,6 +147,9 @@ function entryGapClear(id){
  const other=state.vehicles[id==='A'?'B':'A'];
  if(other.side==='merging'&&mergingPathsConflict(v,other))return false;
  if(other.side!=='circulating')return true;
+ // Vehicles from separate entry lanes following their matching circulating
+ // lanes may merge in parallel; the old check held lane 2 behind lane 1.
+ if(other.arm===v.arm&&other.entryLane!==v.lane&&other.lane===other.entryLane&&v.targetLane===v.lane&&other.lane!==v.targetLane)return true;
  // Check along the entry's intended outer lane; this is a prototype,
  // conservative at high circulating speeds, not a validated gap model.
  if(other.lane>v.targetLane)return true; // only crossed lanes and the destination lane
@@ -177,7 +188,7 @@ function exitGeometry(v,progress,config){
  const w=config.width*config.displayScale,inner=config.diameter*3.1,outer=inner+config.circulating*w;
  const join=outer-18,end=Math.max(490,outer+245);
  const profile=roadSurfaceGeometry(config,outer,end).mouths[v.exitArm].exit;
- const radius=outer-(v.lane-.5)*w,beta=28*Math.PI/180;
+ const radius=outer-(v.lane-.5)*w,beta=exitSweep(v.exitArm,config);
  const x0=radius*Math.sin(beta),y0=radius*Math.cos(beta);
  const x3=(v.exitLane-.5)*w,y3=outer+142;
  const lateral=Math.max(0,x0-x3);
@@ -198,7 +209,7 @@ function advanceVehicles(delta){
  const v=state.vehicles[id];
  if(v.side==='circulating'){
   const increment=increments[id];
-  if(v.exitArm&&v.exitArm!=='none'&&crossesClockwiseAngle(v.angle,increment,circularExitStart(v.exitArm))){
+  if(v.exitArm&&v.exitArm!=='none'&&crossesClockwiseAngle(v.angle,increment,circularExitStart(v.exitArm,state))){
    v.angle=circularExitStart(v.exitArm);v.side='exiting';v.exitProgress=0;renderVehicles();
   }else v.angle=(v.angle+increment+360)%360;
  }else if(v.side==='exiting'){
@@ -482,15 +493,18 @@ function draw(){
  const v=state.vehicles[id];
  const n=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
  const x=v.side==='entry'||v.side==='merging'?-n*w+(v.lane-.5)*w:(v.lane-.5)*w;
- const y=join+(v.side==='entry'?210-165*v.progress:210),angle=orientation[v.arm],fill=id==='A'?'#f5ba43':'#4bb9f3';
+ const y=v.side==='exit'?outer+142:join+(v.side==='entry'?210-165*v.progress:210),angle=orientation[v.side==='exiting'?v.exitArm:v.arm],fill=id==='A'?'#f5ba43':'#4bb9f3';
  // Circulating lane 1 is outermost; all vehicle headings follow UK clockwise flow.
  const radius=inner+(state.circulating-v.lane+.5)*w,theta=v.angle*Math.PI/180;
  const curve=v.side==='merging'?mergeGeometry(v,v.mergeProgress,state):null;
+ const exitCurve=v.side==='exiting'?exitGeometry(v,v.exitProgress,state):null;
  const placement=v.side==='circulating'
  ?'translate('+(radius*Math.sin(theta))+' '+(-radius*Math.cos(theta))+') rotate('+(v.angle+90)+')'
  :v.side==='merging'
  ?'rotate('+angle+') translate('+curve.x+' '+curve.y+') rotate('+curve.heading+')'
- :'rotate('+angle+') translate('+x+' '+y+')';
+ :v.side==='exiting'
+ ?'rotate('+angle+') translate('+exitCurve.x+' '+exitCurve.y+') rotate('+exitCurve.heading+')'
+ :'rotate('+angle+') translate('+x+' '+y+')'+(v.side==='exit'?' rotate(180)':'');
  svg+='<g transform="'+placement+'">';
  svg+='<rect x="-13" y="-20" width="26" height="40" rx="7" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
  svg+='<rect x="-9" y="-10" width="18" height="12" rx="3" fill="#dceef5" stroke="#19354b"/>';
