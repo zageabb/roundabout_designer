@@ -20,7 +20,7 @@
 <p class="warning">Concept-layout tool, not a certified road design. The schematic shows lane counts, directions, circulation and give-way lines. It does not validate swept paths, weaving distances, signage or DMRB design compliance.</p>
 </aside><section class="stage"><div class="simulation-toolbar"><h2>Live road layout</h2><div class="buttons"><button id="playCars" class="primary">Play</button><button id="pauseCars">Pause</button><button id="stepCars">Step +5°</button></div></div><div id="view"></div><p class="legend">Dark grey: carriageway · White dashed: lane dividers · White branched arrows: entry lane movement · Blue labels: approach direction</p><div class="status" id="status">Preloaded with your North, East, South and West lane arrangements.</div></section></main>
 <script>
-const presets={North:{in:3,out:2,moves:['LS','S','R']},East:{in:3,out:2,moves:['L','LS','SR']},South:{in:4,out:2,moves:['L','LS','S','R']},West:{in:3,out:2,moves:['LS','S','R']}};
+const presets={North:{in:3,out:2,moves:['LS','S','R']},East:{in:3,out:2,moves:['LS','S','SR']},South:{in:4,out:2,moves:['L','LS','S','R']},West:{in:3,out:2,moves:['LS','S','R']}};
 const moves=['L','S','R','LS','SR','LR','LSR'];
 const labels={L:'Left only',S:'Straight only',R:'Right only',LS:'Left + straight',SR:'Straight + right',LR:'Left + right',LSR:'Left + straight + right'};
 let state={circulating:3,diameter:38,width:4,displayScale:9.5,laneNumbers:true,showRoutes:false,arms:structuredClone(presets)};
