@@ -75,7 +75,7 @@ function safeAdvance(delta){
 // Enter at the approach-to-circulatory merge angle, not the radial centreline.
 // On an east approach this is 135°, rather than a visible jump to 90°.
 // This offset is provisional until lane-centreline curved paths are modelled.
-const entryAngles={North:45,East:135,South:225,West:315};
+const entryAngles={North:0,East:90,South:180,West:270};
 // Geometric merge from the approach's give-way line into the outer circular lane.
 // local South approach is then rotated into the chosen compass arm.
 function mergeGeometry(v,progress,config){
