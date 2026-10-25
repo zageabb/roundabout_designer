@@ -336,9 +336,10 @@ function advanceVehicles(delta){
     recordScenarioEvent(id,'lane change blocked','Outer circulating lane '+(v.lane-1)+' occupied; keep circulating');
    }
   }
-  // An exit is only usable if the outside lane was reached *before*
-  // the simulation step crosses its mouth, never midway through that step.
-  const outsideAtStepStart=v.lane===1&&!v.laneChange;
+  // Capture the declared connector before advancing an active manoeuvre.
+  // A marked dual exit may use ring 2 → exit 2 without entering ring 1.
+  // Never permit an exit if the relevant lane transition is still underway.
+  const laneExitAtStepStart=ExitLaneRules.resolve(state,v);
   if(v.laneChange&&LaneChanges.advance(v,increment)){
    recordScenarioEvent(id,'lane change completed','Now circulating lane '+v.lane);
    renderVehicles();
@@ -346,10 +347,16 @@ function advanceVehicles(delta){
   // In opted-in right-turn planning an inner-lane car may NOT jump across
   // intervening lanes into the exit; it continues round for another chance.
   if(exit!==null&&crossesClockwiseAngle(v.angle,increment,exit)){
-   if(prepared&&!outsideAtStepStart){
+   if(prepared&&!laneExitAtStepStart.allowed){
     v.angle=(v.angle+increment+360)%360;
-    recordScenarioEvent(id,'missed exit','Could not reach outside lane safely; continue circulating');
+    recordScenarioEvent(id,'missed exit',laneExitAtStepStart.reason==='no-marked-connector'
+      ?'No declared marked connector from circulating lane '+v.lane+' to '+v.exitArm+'; continue circulating'
+      :'Could not reach a permitted exit lane safely; continue circulating');
    }else{
+    if(prepared&&laneExitAtStepStart.exitLane!==null&&v.exitLane!==laneExitAtStepStart.exitLane){
+     v.exitLane=laneExitAtStepStart.exitLane;
+     recordScenarioEvent(id,'marked exit','Follow declared '+laneExitAtStepStart.mode+' connector to exit lane '+v.exitLane);
+    }
     v.angle=exit;v.side='exiting';v.exitProgress=0;v.laneChange=null;renderVehicles();
    }
   }else v.angle=(v.angle+increment+360)%360;
