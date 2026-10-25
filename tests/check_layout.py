@@ -51,7 +51,8 @@ assert ("South", 4, "R", "East") in paths
 assert "function provisionalLaneMapping(config)" in html
 assert "function validateNetwork(config)" in html
 assert "return LaneNetwork.build(config).turns" in html # was: circulatingLane:entry,exitLane:exit,status:'provisional'" in html
-assert "Provisional mapping only" in html
+assert "These lane-marking connections are schematic" in html
+assert "ExitLaneRules.describe(state,active)" in html
 assert "function normalizeVehicles()" in html
 assert "function renderVehicles()" in html
 assert "defaultVehicles()" in html
