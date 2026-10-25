@@ -6,3 +6,9 @@
 
 /* Prediction preview does not determine collision or liability. */
 #projectedConflict{margin:8px 0;line-height:1.5}#projectedConflict.conflict-warning{background:#fff2e1;color:#77470c}#projectedConflict.conflict-spatial{background:#eaf5fb;color:#235672}
+
+/* Explicit lane-to-exit connector editor, compact on mobile. */
+.connector-editor{margin:9px 0 12px;padding:9px 11px;border:1px solid #d4e2eb;border-radius:8px;background:#f6fbff}
+.connector-editor .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
+.connector-editor .row label{font-size:12px;min-width:110px;color:#274c61}
+.connector-editor .row select{flex:1;min-width:0;max-width:230px}
