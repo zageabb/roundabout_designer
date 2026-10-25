@@ -17,7 +17,7 @@ const PriorityRules=(()=>{
   // Once a merge is under way its path is reserved, independently of road rules.
   if(incumbent.side==='merging'&&rel.conflicts)
    return {allow:false,reason:'merge-in-progress',control:policy};
-  if(incumbent.side!=='circulating'&&incumbent.side!=='merging')
+  if(incumbent.side!=='circulating'&&incumbent.side!=='merging'&&incumbent.hasPriority!==true)
    return {allow:true,reason:'no-active-priority-vehicle',control:policy};
   // Uncontrolled is explicitly experimental. Safe playback still prevents
   // direct same-node simultaneous merges (above) but doesn't grant yield priority.
