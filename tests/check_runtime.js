@@ -61,4 +61,20 @@ app.state.showConflictZones=false;
 app.draw();
 assert.doesNotMatch(elements.view.innerHTML,/Projected interaction location/);
 assert.match(elements.projectedConflict.textContent,/Possible simultaneous path occupancy/);
+// Vehicle size inputs must update both the configuration and the visible
+// body graphics; JSON serialization carries the chosen footprint unchanged.
+app.state.vehicles.A.lengthMetres=8;
+app.state.vehicles.A.widthMetres=2.6;
+app.renderControls();app.draw();
+assert.match(elements.vehicles.innerHTML,/data-field="lengthMetres" value="8"/);
+assert.match(elements.vehicles.innerHTML,/data-field="widthMetres" value="2.6"/);
+assert.match(elements.view.innerHTML,/width="24\.7" height="76" rx="6"/);
+const exportedVehicle=JSON.parse(JSON.stringify(app.state.vehicles.A));
+assert.equal(exportedVehicle.lengthMetres,8);
+assert.equal(exportedVehicle.widthMetres,2.6);
+app.state.vehicles.A.lengthMetres=99;
+app.state.vehicles.A.widthMetres=0;
+app.normalizeVehicles();
+assert.equal(app.state.vehicles.A.lengthMetres,12);
+assert.equal(app.state.vehicles.A.widthMetres,1.8);
 console.log('Browser startup, SVG render, controls, playback and replay smoke-test passed.');
