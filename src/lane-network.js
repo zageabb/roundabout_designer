@@ -134,6 +134,10 @@ const LaneNetwork=(()=>{
     const transitions=typeof LaneChanges!=='undefined'?LaneChanges:require('./lane-changes.js');
     return transitions.ringPose(config,v);
    }
+   if(typeof curves.circularExitStart==='function'){
+    const spiral=typeof MarkedExitGeometry!=='undefined'?MarkedExitGeometry:require('./marked-exit-geometry.js');
+    if(spiral.enabled(config,v))return spiral.sample(config,v,curves.circularExitStart(v.exitArm,config));
+   }
    const radius=inner+(config.circulating-v.lane+.5)*width;
    const angle=v.angle*Math.PI/180;
    return {x:radius*Math.sin(angle),y:-radius*Math.cos(angle),heading:v.angle+90,phase:'circulating'};
