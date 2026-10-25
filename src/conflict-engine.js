@@ -118,12 +118,10 @@ const ConflictEngine=(()=>{
   return Math.hypot(p[0]-a[0]-x*t,p[1]-a[1]-y*t);
  }
  function polygonDistance(a,b){
-  const centres=Math.hypot(a.centre[0]-b.centre[0],a.centre[1]-b.centre[1]);
   if(polygonsOverlap(a,b))return 0;
-  let closest=Math.max(0,centres-a.radius-b.radius);
-  // Quick conservative lower bound: disjoint envelopes cannot be closer.
-  if(closest>20)return closest;
-  closest=Infinity;
+  // Always calculate the actual body-edge clearance, even for distant cars.
+  // A bounding-circle lower bound alone must not be reported as a measurement.
+  let closest=Infinity;
   for(let i=0;i<4;i++){
    const a1=a.corners[i],a2=a.corners[(i+1)%4];
    const b1=b.corners[i],b2=b.corners[(i+1)%4];
