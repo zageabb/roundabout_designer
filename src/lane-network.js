@@ -50,7 +50,7 @@ const LaneNetwork=(()=>{
    const arm=ARMS[i],next=ARMS[(i+1)%4],a=config.arms[arm];
    // A roundabout arm is an exit diverge followed clockwise by an entry merge.
    nodes.push({id:'node:'+arm+':exit',type:'diverge',arm,control:'none'});
-   nodes.push({id:'node:'+arm+':entry',type:'merge',arm,control:'give-way'});
+   nodes.push({id:'node:'+arm+':entry',type:'merge',arm,control:config.entryPriority?.[arm]==='none'?'none':'give-way'});
    for(const [role,count,direction] of [['in',a.in,'toward-junction'],['out',a.out,'away-from-junction']]){
     const id='segment:'+arm+':'+role;
     segments.push({id,type:'approach',arm,direction,laneCount:count});
