@@ -47,15 +47,16 @@ function projectedVehicleInteraction(){
  const el=$('projectedConflict');
  if(el){
   const clearance=report.closestSpatialMetres.toFixed(1);
+  const kind={merge:'merge',diverge:'exit/diverge',following:'following',crossing:'crossing'}[report.interactionKind]||'path';
   if(report.type==='possible_overlap'){
    el.className='status conflict-warning';
-   el.textContent='Possible simultaneous path occupancy in '+report.timeSeconds.toFixed(1)+' s (minimum projected centreline distance '+report.closestSimultaneousMetres.toFixed(1)+' m). Geometric warning only; no crash or priority finding.';
+   el.textContent='Possible simultaneous path occupancy ('+kind+') in '+report.timeSeconds.toFixed(1)+' s (estimated body clearance '+report.closestSimultaneousMetres.toFixed(1)+' m). Vehicle-size screening only; no crash or priority finding.';
   }else if(report.type==='paths_intersect_different_times'){
    el.className='status conflict-spatial';
-   el.textContent='Paths approach within '+clearance+' m, but at different projected times (estimated arrival gap '+report.arrivalGapSeconds.toFixed(1)+' s). No simultaneous centreline overlap predicted.';
+   el.textContent='Vehicle footprints overlap or come within screening margin on the '+kind+' paths, but at different projected times (sample arrival gap '+report.arrivalGapSeconds.toFixed(1)+' s). No simultaneous body proximity predicted.';
   }else{
    el.className='status';
-   el.textContent='No close path interaction projected in the next 8 seconds. Current minimum centreline clearance '+report.closestSimultaneousMetres.toFixed(1)+' m.';
+   el.textContent='No close vehicle-body interaction projected in the next 8 seconds. Minimum sampled body clearance '+report.closestSimultaneousMetres.toFixed(1)+' m.';
   }
  }
  return report;
@@ -129,6 +130,8 @@ function normalizeVehicles(){
  v.side=['entry','exit','circulating','merging','exiting'].includes(v.side)?v.side:'entry';
  v.angle=((Number(v.angle??45)%360)+360)%360;
  v.speed=Math.max(0,Math.min(90,Number(v.speed??20)||0));
+ v.lengthMetres=Math.max(3,Math.min(12,Number(v.lengthMetres)||4.4));
+ v.widthMetres=Math.max(1.2,Math.min(3.2,Number(v.widthMetres)||1.8));
  v.progress=Math.max(0,Math.min(1,Number(v.progress??0)||0));
  v.waiting=Boolean(v.waiting);
  v.mergeProgress=Math.max(0,Math.min(1,Number(v.mergeProgress)||0));
