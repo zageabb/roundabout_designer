@@ -44,11 +44,14 @@ function draw(){
      svg+='<path d="M '+x+' '+y+' Q 0 0 '+u+' '+v+'" fill="none" stroke="#65e4f5" stroke-opacity=".45" stroke-width="3" stroke-dasharray="9 8"/>';
    }
  }
- // A candidate is a shared position in the projected *centreline* paths,
- // not a verified swept-body impact or legal-fault finding.
- if(state.showConflictZones!==false&&interaction.point&&interaction.spatialCandidate){
-  const p=interaction.point,color=interaction.simultaneousCandidate?'#ffba60':'#8ce3ff';
+ // Projected conflict zone is a small radius around the closest estimated
+ // body interaction. This represents temporal occupancy screening, NOT a
+ // verified vehicle sweep or legal-fault determination.
+ if(state.showConflictZones!==false&&interaction.zone&&interaction.spatialCandidate){
+  const zone=interaction.zone,p=zone,color=interaction.simultaneousCandidate?'#ffba60':'#8ce3ff';
+  const radius=zone.radiusMetres*state.displayScale;
   svg+='<g transform="translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')" aria-label="Projected interaction location">'+
+   '<circle class="projected-conflict-zone" r="'+radius.toFixed(2)+'" fill="'+color+'" fill-opacity=".14" stroke="'+color+'" stroke-width="1.5" stroke-opacity=".65"/>'+
    '<circle r="18" fill="none" stroke="'+color+'" stroke-width="4" stroke-dasharray="7 5"/>'+
    '<circle r="4" fill="'+color+'" stroke="#22333e" stroke-width="1.5"/></g>';
  }
