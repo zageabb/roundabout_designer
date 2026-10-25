@@ -56,7 +56,7 @@ const source=geometrySource+'\n'+
  '\n;({circularExitStart,exitGeometry});';
 const geometry=vm.runInNewContext(source,{
  entryAngles:{North:0,East:90,South:180,West:270},
- MarkedExitGeometry:spiral
+ MarkedExitGeometry:spiral,ExitLaneRules:rules,LaneChanges:changes
 });
 const exitAngle=geometry.circularExitStart('North',cfg);
 const base=vehicle(3,{angle:exitAngle});
