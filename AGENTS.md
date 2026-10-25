@@ -60,3 +60,9 @@
 - In safe mode, use target-lane body clearance before starting **each** outward step; a blocked move must not be bypassed by forced exit. When the exit is passed without prior completion, log `missed exit` and keep circulating. Unrestricted mode may deliberately violate gap checks.
 - One lane per transition; no unvalidated multi-lane teleportation. A spiral/painted lane must eventually use a dedicated connector, not this default lateral movement.
 - Keep `tests/check_lane_changes.js`, `tests/check_runtime.js`, old merge and trajectory tests in CI. Do not market the fixed 22° path/gap screen as validated highway geometry or continuous swept-body collision prevention.
+
+## V1.34 declared exit marking invariants
+- `ExitLaneRules` owns the per-exit, declarative connector permissions. `exitLaneModes[arm]` may be `conventional` or `spiral-dual`; missing/unknown/unsupported selections **must** behave conventionally without breaking legacy JSON. This is distinct from the driver's `overrideExitRules` for an illegal approach turn.
+- V1.33 discretionary outward transitions run only where the opt-in right-turn planner uses a **conventional** exit; a spiral-dual connector 2→2 does not justify an automatic movement into outer ring lane 1. No marked connector (e.g. 3→2 undeclared) means **miss the exit and keep circulating**.
+- Keep the lane graph, turn preview, movement engine, projection and SVG mark consistent with actual declared connector IDs; outbound selection is mapped, not invented. `tests/check_exit_markings.js` and full runtime tests are mandatory in CI.
+- Do not mistake the schematic 1→1,2→2 dual-exit annotation for a physically correct spiral curve, painted lane geometry, measured clearance or full priority/collision assessment. The next milestone is editable lane connectors and measured curve/swept-body modelling.
