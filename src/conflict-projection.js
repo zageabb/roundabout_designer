@@ -23,9 +23,13 @@ const ConflictProjection=(()=>{
     v.mergeProgress=0;
    }
   }else if(v.side==='circulating'){
+   const transitions=typeof LaneChanges!=='undefined'?LaneChanges:require('./lane-changes.js');
+   if(v.laneChange)transitions.advance(v,movement);
    const start=geometry.circularExitStart;
-   if(v.exitArm&&v.exitArm!=='none'&&crosses(v.angle,movement,start(v.exitArm,config))){
-    v.angle=start(v.exitArm,config);v.side='exiting';v.exitProgress=0;
+   const prepared=v.autoLaneChange&&transitions.isRightTurn(v.arm,v.exitArm);
+   if(v.exitArm&&v.exitArm!=='none'&&crosses(v.angle,movement,start(v.exitArm,config))
+      &&(!prepared||(v.lane===1&&!v.laneChange))){
+    v.angle=start(v.exitArm,config);v.side='exiting';v.exitProgress=0;v.laneChange=null;
    }else v.angle=(v.angle+movement)%360;
   }else if(v.side==='exiting'){
    v.exitProgress=Math.min(1,(v.exitProgress||0)+movement/55);
@@ -73,7 +77,7 @@ const ConflictProjection=(()=>{
    point:result.point?{x:result.point.x*scale,y:result.point.y*scale}:null,
    zone:result.zone?{...result.zone,x:result.zone.x*scale,y:result.zone.y*scale}:null,
    horizonSeconds:Number(options.horizonSeconds??8),
-   assumption:'sampled vehicle-body zone windows under constant speed; ignores priority, yielding, braking and continuous swept-body motion'};
+   assumption:'sampled vehicle-body zone windows at constant speed; active outward moves included, future gap-dependent moves excluded; ignores yielding, braking and continuous swept-body motion'};
  }
  return Object.freeze({forecast,assessVehicles});
 })();
