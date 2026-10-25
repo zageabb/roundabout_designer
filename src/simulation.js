@@ -33,7 +33,7 @@ let playback=false,playbackFrame=null,previousFrame=null;
 let scenarioBaseline=null,runState=null;
 // The renderer and trail recorder now read exactly the same canonical pose.
 function vehicleWorldPosition(v,config){
- const pose=LaneNetwork.sampleVehiclePose(config,v,{mergeGeometry,exitGeometry});
+ const pose=LaneNetwork.sampleVehiclePose(config,v,{mergeGeometry,exitGeometry,circularExitStart});
  return [pose.x,pose.y];
 }
 // Independent projection diagnostic only: no braking, yielding or movement
@@ -299,7 +299,8 @@ function exitGeometry(v,progress,config){
  const w=config.width*config.displayScale,inner=config.diameter*3.1,outer=inner+config.circulating*w;
  const join=outer-18,end=Math.max(490,outer+245);
  const profile=roadSurfaceGeometry(config,outer,end).mouths[v.exitArm].exit;
- const radius=outer-(v.lane-.5)*w,beta=exitSweep(v.exitArm,config);
+ const spiral=typeof MarkedExitGeometry!=='undefined'?MarkedExitGeometry:require('./marked-exit-geometry.js');
+ const radius=outer-(v.lane-.5)*w+spiral.radialShift(config,v),beta=exitSweep(v.exitArm,config);
  const x0=radius*Math.sin(beta),y0=radius*Math.cos(beta);
  const x3=(v.exitLane-.5)*w,y3=outer+142;
  const lateral=Math.max(0,x0-x3);
