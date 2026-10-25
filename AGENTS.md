@@ -42,3 +42,9 @@
 - Preserve the existing safe/unrestricted motion choices. Body predictions must remain a non-invasive advisory overlay until a deterministic yielding/braking integration has explicit behavioural acceptance tests.
 - Spatial body proximity at different projected times must not be relabelled a simultaneous overlap; projection screening is not an accident/fault assessment. Keep sampled/constant-speed limitations conspicuous.
 - Include `tests/check_footprints.js`, `tests/check_conflicts.js` and `tests/check_runtime.js` in CI for changes affecting pose, dimensions, classifications or route physics.
+
+## V1.31 conflict-zone implementation rules
+- `ConflictZones.assess` must remain a standalone pure module: distances/dimensions in **metres**, times in **seconds**, interpolated heading consistent with `ConflictEngine.interpolatePose`. Never introduce browser state, SVG, or hard-coded roundabout bearings into this module.
+- Do not equate an **overlapping shared-zone window** with body collision or legal fault. The approximated circular zone may include cars whose actual rectangles are mutually clear. Maintain independent body-overlap, zone-window and priority/rule classifications.
+- Respect the distinction between spatial overlap at **different times** and temporal interval overlap. Keep multiple visits as separate windows and leave empty occupancy explicitly unresolved rather than inventing arrival times.
+- Run `tests/check_zones.js`, `tests/check_footprints.js`, `tests/check_conflicts.js` and `tests/check_runtime.js` when changing timing, geometry, forecast adapters, or marker drawing. Keep browser-only/offline operation and existing safe/risky behaviour unchanged until accepted priority-control logic exists.
