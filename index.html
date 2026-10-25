@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roundabout Designer</title>
-<link rel="stylesheet" href="./src/styles.css"></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.31</span></h1></header>
+<link rel="stylesheet" href="./src/styles.css"></head><body><header><h1>Roundabout Designer <span>— UK road-layout prototype v1.32</span></h1></header>
 <main><aside class="panel"><h2>Roundabout configuration</h2>
 <div class="row"><label for="circulating">Circulating lanes</label><input id="circulating" type="number" min="1" max="5" value="3"></div>
 <div class="row"><label for="diameter">Island diameter (m)</label><input id="diameter" type="number" min="12" max="85" step="1" value="38"></div>
@@ -10,8 +10,9 @@
 <p class="muted">UK left-hand traffic. Vehicles enter on the left side of each approach and travel clockwise around the island.</p>
 <div class="section"><h2>Approach configuration</h2><div class="tabs" id="tabs"></div>
 <div class="row"><label for="incoming">Entry lanes</label><input id="incoming" type="number" min="1" max="6"></div>
+<div class="row"><label for="entryPriority">Entry priority</label><select id="entryPriority"><option value="give-way">Give way to circulating traffic</option><option value="none">Uncontrolled (experiment)</option></select></div>
 <div class="row"><label for="outgoing">Exit lanes</label><input id="outgoing" type="number" min="1" max="6"></div>
-<p class="muted">Entry lanes numbered from the driver's left to right while approaching the junction.</p><div id="lanes"></div><div class="section"><h2>Permitted movements</h2><div id="connections" class="muted"></div><p id="networkNotice" class="muted"></p></div></div>
+<p class="muted">Entry lanes numbered from the driver's left to right while approaching the junction. Uncontrolled entry is an experimental rules-only scenario; it may allow unsafe merges.</p><div id="lanes"></div><div class="section"><h2>Permitted movements</h2><div id="connections" class="muted"></div><p id="networkNotice" class="muted"></p></div></div>
 <div class="section"><h2>Project</h2><div class="buttons">
 <button id="save" class="primary">Export SVG</button><button id="png">Export PNG</button><button id="json">Save JSON</button><button id="load">Load JSON</button><button id="reset">Reset defaults</button></div>
 <input id="file" type="file" accept=".json,application/json" hidden></div>
@@ -22,6 +23,7 @@
 <script src="./src/conflict-engine.js"></script>
 <script src="./src/conflict-zones.js"></script>
 <script src="./src/conflict-projection.js"></script>
+<script src="./src/priority-rules.js"></script>
 <script src="./src/simulation.js"></script>
 <script src="./src/controls.js"></script>
 <script src="./src/geometry.js"></script>
