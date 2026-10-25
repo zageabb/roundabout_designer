@@ -25,6 +25,15 @@ assert.equal(rules.resolve(cfg,vehicle(3)).exitLane,3);
 assert(!rules.resolve(cfg,vehicle(2)).allowed);
 assert.equal(rules.resolve(cfg,vehicle(2)).reason,'no-marked-connector');
 assert.equal(changes.exitPlan(cfg,vehicle(3),330).steps,0,'Custom marked exit cannot force a discretionary outward change');
+const mappedRoute=net.routeForVehicle(cfg,{...vehicle(3),entryLane:3,exitLane:1});
+assert.equal(mappedRoute.exitLane,3);
+assert.equal(mappedRoute.connectorAvailable,true);
+assert.equal(mappedRoute.laneIds.at(-1),'out:North:3');
+const missingRoute=net.routeForVehicle(cfg,{...vehicle(2),entryLane:3,exitLane:1});
+assert.equal(missingRoute.kind,'unconnected-exit');
+assert.equal(missingRoute.connectorAvailable,false);
+assert.equal(missingRoute.exitLane,null);
+assert(!missingRoute.laneIds.some(x=>x.startsWith('out:North:')));
 function invalid(links){
  const test={...cfg,exitLaneConnectors:{North:links}};
  assert.equal(rules.supported(test,'North'),false);
