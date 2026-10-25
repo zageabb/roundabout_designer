@@ -88,3 +88,10 @@ Vehicle A and B cards now allow **Length (m)** and **Width (m)** to be edited in
 The **Projected route interaction** preview compares sampled **oriented car bodies**, not just centre points. It reports preliminary crossing/merge/diverge/following interactions and indicates whether predicted proximity occurs at the same time (amber) or only when considering the paths at different times (blue). The current body-edge screening margin is **0.15 m**; it is a user-interface threshold, not an engineering safety standard.
 
 Predictions still assume constant configured angular speeds and do not simulate yielding, braking, real-world vehicle swept paths between samples, legal fault, or a confirmed collision. The existing safe and unrestricted playback modes remain unchanged. Regression tests cover car dimensions, projected interactions, route overrides and UI rendering.
+
+## V1.31 shared-zone occupancy timing
+The **Projected route interaction** panel now includes a separate **Zone timing** readout: approximate seconds when A and B enter and leave the same predicted vehicle-body interaction area, plus the estimated **overlap duration** or **time gap**. An optional translucent area appears around the interaction marker, representing a provisional **0.9 m radius** shared zone.
+
+This is a more informative interpretation of the existing body-size-aware forecast, **not** a verified collision detector. Predicted windows are based on constant-speed sampled/interpolated movement over the next eight seconds; a shared zone occupied at overlapping times need not mean the cars actually collide. The zone radius is an inspection convention, not a mandated safe separation. Vehicle braking, priority decisions and continuous vehicle sweeps are still future work.
+
+The reusable implementation is `src/conflict-zones.js`, loaded with the other static browser scripts. The expanded automated suite includes `tests/check_zones.js` for time-window and repeated-visit handling.
