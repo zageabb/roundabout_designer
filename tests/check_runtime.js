@@ -157,4 +157,39 @@ app.normalizeVehicles();
 app.advanceVehicles(5);
 assert.equal(app.state.vehicles.A.side,'exiting','Legacy opted-out scenarios are unchanged');
 app.state.exitLaneModes.North='conventional';
+// A custom surveyed-by-user (not auto-inferred) lane 3 → outbound 3 link
+// should appear in the editor, graph preview and the actual moving-car route.
+app.clearScenario();
+app.state.circulating=3;
+app.state.arms.North.out=3;
+app.state.exitLaneModes.North='custom';
+app.state.exitLaneConnectors.North=[
+ {fromLane:1,exitLane:1},{fromLane:3,exitLane:3}
+];
+app.state.showRoutes=true;
+app.renderControls();app.draw();
+assert.match(elements.exitConnectorEditor.innerHTML,/data-custom-exit-source="3"/);
+assert.match(elements.exitLaneNotice.textContent,/circulating 3 → exit 3/);
+assert.match(elements.view.innerHTML,/Marked exit centreline 3 to 3/);
+assert.match(elements.view.innerHTML,/1→1 · 3→3/);
+const encoded=JSON.parse(JSON.stringify(app.state));
+assert.deepEqual(encoded.exitLaneConnectors.North,app.state.exitLaneConnectors.North);
+app.state.vehicles={A:{...preparedCar(),lane:3,targetLane:3,
+ angle:(app.circularExitStart('North',app.state)-1+360)%360,autoLaneChange:true},
+ B:spareCar()};
+app.normalizeVehicles();
+app.advanceVehicles(5);
+assert.equal(app.state.vehicles.A.side,'exiting');
+assert.equal(app.state.vehicles.A.exitLane,3);
+assert.equal(app.state.vehicles.A.lane,3,'Custom marked connector should not jump into outer lane');
+app.clearScenario();
+app.state.vehicles={A:{...preparedCar(),lane:2,targetLane:2,
+ angle:(app.circularExitStart('North',app.state)-1+360)%360,autoLaneChange:true},
+ B:spareCar()};
+app.normalizeVehicles();
+app.advanceVehicles(5);
+assert.equal(app.state.vehicles.A.side,'circulating');
+assert(app.getActivity().events.some(e=>e.event==='missed exit'));
+app.state.showRoutes=false;
+app.state.exitLaneModes.North='conventional';
 console.log('Browser startup, SVG render, controls, playback and replay smoke-test passed.');
