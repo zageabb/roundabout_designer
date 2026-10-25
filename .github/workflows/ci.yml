@@ -13,6 +13,8 @@ jobs:
         run: node tests/check_network.js
       - name: Verify projected path interactions and temporal separation
         run: node tests/check_conflicts.js
+      - name: Check conflict-zone occupancy windows
+        run: node tests/check_zones.js
       - name: Validate sized vehicle footprint interactions
         run: node tests/check_footprints.js
       - name: Exercise road geometry
