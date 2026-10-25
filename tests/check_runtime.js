@@ -56,11 +56,16 @@ app.state.vehicles.B={arm:'East',entryLane:2,side:'merging',lane:2,targetLane:1,
 app.state.showConflictZones=true;
 app.draw();
 assert.match(elements.projectedConflict.textContent,/Possible simultaneous path occupancy/);
+assert.match(elements.zoneTiming.textContent,/Zone timing — A: /);
+assert.match(elements.zoneTiming.textContent,/B: /);
+assert.match(elements.zoneTiming.textContent,/shared-zone occupancy overlaps/);
 assert.match(elements.view.innerHTML,/Projected interaction location/);
+assert.match(elements.view.innerHTML,/class="projected-conflict-zone"/);
 app.state.showConflictZones=false;
 app.draw();
 assert.doesNotMatch(elements.view.innerHTML,/Projected interaction location/);
 assert.match(elements.projectedConflict.textContent,/Possible simultaneous path occupancy/);
+assert.match(elements.zoneTiming.textContent,/shared-zone occupancy overlaps/);
 // Vehicle size inputs must update both the configuration and the visible
 // body graphics; JSON serialization carries the chosen footprint unchanged.
 app.state.vehicles.A.lengthMetres=8;
