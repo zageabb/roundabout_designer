@@ -32,10 +32,38 @@ function draw(){
      svg+=line(x,join+145,x,join+175,'white',3);
      svg+='<path d="M '+(x-5)+' '+(join+165)+' L '+x+' '+(join+176)+' L '+(x+5)+' '+(join+165)+'" fill="none" stroke="white" stroke-width="3"/>';
    }
-   if(ExitLaneRules.mode(state,name)==='spiral-dual'){
-     svg+='<text x="'+(w*.85)+'" y="'+(join+62)+'" font-size="11" fill="#9be5f5" text-anchor="middle" aria-label="User-declared marked exit">1→1 · 2→2</text>';
+   if(ExitLaneRules.mode(state,name)!=='conventional'){
+     const links=ExitLaneRules.connectors(state,name);
+     svg+='<text x="'+(w*.85)+'" y="'+(join+62)+'" font-size="11" fill="#9be5f5" text-anchor="middle" aria-label="User-declared marked exit">'+
+      links.map(link=>link.fromLane+'→'+link.exitLane).join(' · ')+'</text>';
    }
    svg+='</g>';
+ }
+ // Exact sampled marked connector centreline guides use the same sampler
+ // as vehicle sprites, projection and traces. These are illustrative paths,
+ // not imported road markings or a certified swept-envelope design.
+ if(state.showRoutes&&ExitLaneRules.mode(state,active)!=='conventional'){
+  const armsOrder=['North','East','South','West'];
+  const origin=armsOrder[(armsOrder.indexOf(active)+1)%4],exitAngle=circularExitStart(active,state);
+  for(const link of ExitLaneRules.connectors(state,active)){
+   const base={arm:origin,exitArm:active,lane:link.fromLane,targetLane:link.fromLane,
+    exitLane:link.exitLane,autoLaneChange:true,side:'circulating',angle:0};
+   const samples=[];
+   for(let i=0;i<=24;i++){
+    const v={...base,angle:(exitAngle-MarkedExitGeometry.SPAN_DEGREES+
+      MarkedExitGeometry.SPAN_DEGREES*i/24+360)%360};
+    const pos=LaneNetwork.sampleVehiclePose(state,v,{mergeGeometry,exitGeometry,circularExitStart});
+    samples.push([pos.x,pos.y]);
+   }
+   for(let i=1;i<=18;i++){
+    const pos=LaneNetwork.sampleVehiclePose(state,{...base,side:'exiting',exitProgress:i/18},
+      {mergeGeometry,exitGeometry,circularExitStart});
+    samples.push([pos.x,pos.y]);
+   }
+   svg+='<polyline aria-label="Marked exit centreline '+link.fromLane+' to '+link.exitLane+
+    '" fill="none" stroke="#69dcf0" stroke-width="2.6" stroke-dasharray="8 5" stroke-opacity=".8" points="'+
+     samples.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ')+'"/>';
+  }
  }
  // Route lines show movement connectivity, NOT exact vehicle swept paths.
  if(state.showRoutes){
@@ -89,7 +117,7 @@ function draw(){
  }
  for(const id of ['A','B']){
  const v=state.vehicles[id];
- const pose=LaneNetwork.sampleVehiclePose(state,v,{mergeGeometry,exitGeometry});
+ const pose=LaneNetwork.sampleVehiclePose(state,v,{mergeGeometry,exitGeometry,circularExitStart});
  const fill=id==='A'?'#f5ba43':'#4bb9f3';
  const placement='translate('+pose.x+' '+pose.y+') rotate('+pose.heading+')';
  svg+='<g transform="'+placement+'">';
