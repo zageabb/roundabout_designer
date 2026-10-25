@@ -85,9 +85,12 @@ assert 'id="drivingMode"' in html
 assert 'id="minGap"' in html
 assert "function advanceEntries(delta)" in html
 assert "const entryAngles={North:0,East:90,South:180,West:270}" in html
-# Entry bearings correspond to the compass arms; the smooth curve ends 30 degrees clockwise.
-assert "target=entryAngles[v.arm]" in html
-assert "const behind=(target-other.angle+360)%360" in html
+# Entry decisions use shared time-based priority rules, not compass-only
+# proximity checks. Bearing angles still align the joining Bézier.
+assert "function entryPriorityDecision(id)" in html
+assert "PriorityRules.decideMerge" in html
+assert "ConflictProjection.assessVehicles" in html
+assert "const entryAngles={North:0,East:90,South:180,West:270}" in html
 assert "if(state.drivingMode==='safe'&&!entryGapClear(id))" in html
 assert "v.side='circulating';v.lane=v.targetLane" in html
 assert 'class="simulation-toolbar"' in html
