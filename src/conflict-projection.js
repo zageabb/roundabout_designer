@@ -47,7 +47,7 @@ const ConflictProjection=(()=>{
   const v={...vehicle},samples=[],count=Math.ceil(horizon/step);
   const append=t=>{
    const pose=geometry.sampleVehiclePose(config,v,geometry);
-   samples.push({t,x:pose.x/config.displayScale,y:pose.y/config.displayScale,phase:v.side});
+   samples.push({t,x:pose.x/config.displayScale,y:pose.y/config.displayScale,heading:pose.heading,phase:v.side});
   };
   append(0);
   for(let i=1;i<=count;i++){
@@ -61,15 +61,16 @@ const ConflictProjection=(()=>{
   const samplesA=forecast(config,vehicles.A,geometry,options);
   const samplesB=forecast(config,vehicles.B,geometry,options);
   const core=typeof ConflictEngine!=='undefined'?ConflictEngine:require('./conflict-engine.js');
-  const result=core.assess(samplesA,samplesB,{
-   clearanceMetres:2.4,stepSeconds:0.15,
-   ...(options.clearanceMetres?{clearanceMetres:options.clearanceMetres}:{})
+  const result=core.assessFootprints(samplesA,samplesB,{
+   lengthA:vehicles.A.lengthMetres??4.4,widthA:vehicles.A.widthMetres??1.8,
+   lengthB:vehicles.B.lengthMetres??4.4,widthB:vehicles.B.widthMetres??1.8,
+   marginMetres:options.marginMetres??0.15,stepSeconds:0.15
   });
   return {...result,point:result.point?{
    x:result.point.x*config.displayScale,
    y:result.point.y*config.displayScale}:null,
    horizonSeconds:Number(options.horizonSeconds??8),
-   assumption:'constant-speed forecast; ignores priority, yielding and braking'};
+   assumption:'sampled vehicle rectangles at constant speed; ignores priority, yielding, braking and continuous swept-body motion'};
  }
  return Object.freeze({forecast,assessVehicles});
 })();
