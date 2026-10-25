@@ -21,7 +21,7 @@ const context=vm.createContext({
  requestAnimationFrame:()=>123,cancelAnimationFrame:()=>{},
  console,
 });
-const app=vm.runInContext(getJavaScript()+'\n;({state,draw,advanceVehicles,renderControls,normalizeVehicles,stopPlayback});',context);
+const app=vm.runInContext(getJavaScript()+'\n;({state,draw,advanceVehicles,renderControls,normalizeVehicles,stopPlayback,circularExitStart,clearScenario,getActivity:()=>runState});',context);
 assert.match(elements.view.innerHTML,/<svg id="diagram"/);
 assert.match(elements.view.innerHTML,/A<\/text>/);
 assert.match(elements.view.innerHTML,/B<\/text>/);
@@ -82,4 +82,46 @@ app.state.vehicles.A.widthMetres=0;
 app.normalizeVehicles();
 assert.equal(app.state.vehicles.A.lengthMetres,12);
 assert.equal(app.state.vehicles.A.widthMetres,1.8);
+// Full right-turn scenario: start inner, enter outside lane in two discrete
+// completed manoeuvres, then exit. The existing unchecked behaviour is intact.
+const exitStart=app.circularExitStart('North',app.state);
+function preparedCar(){return {arm:'East',side:'circulating',lane:3,targetLane:3,
+ entryLane:3,angle:(exitStart-55+360)%360,exitArm:'North',exitLane:1,
+ speed:20,autoLaneChange:true,lengthMetres:4.4,widthMetres:1.8};}
+function spareCar(){return {arm:'South',side:'exit',lane:1,speed:0,exitArm:'none'};}
+app.clearScenario();
+app.state.drivingMode='safe';
+app.state.vehicles={A:preparedCar(),B:spareCar()};
+app.normalizeVehicles();
+for(let i=0;i<19;i++)app.advanceVehicles(5);
+assert(['exiting','exit'].includes(app.state.vehicles.A.side),'A should exit after reaching outer lane');
+assert.equal(app.state.vehicles.A.lane,1);
+assert.equal(app.getActivity().events.filter(e=>e.event==='lane change completed').length,2);
+assert.equal(app.getActivity().events.filter(e=>e.event==='missed exit').length,0);
+
+// Another car in the adjacent lane prevents the first outward movement;
+// if the turn cannot be finished, car A must continue past its chosen exit.
+app.clearScenario();
+app.state.drivingMode='safe';
+app.state.vehicles={A:preparedCar(),B:{...preparedCar(),lane:2,targetLane:2,autoLaneChange:false,exitArm:'none'}};
+app.normalizeVehicles();
+for(let i=0;i<18;i++)app.advanceVehicles(5);
+assert.equal(app.state.vehicles.A.side,'circulating');
+assert.equal(app.state.vehicles.A.lane,3);
+assert.equal(app.state.vehicles.A.autoLaneChange,true);
+assert(app.getActivity().events.some(e=>e.event==='lane change blocked'));
+assert(app.getActivity().events.some(e=>e.event==='missed exit'));
+assert(!app.getActivity().events.some(e=>e.event==='lane change completed'));
+
+// Unrestricted mode intentionally allows a conflicting outward manoeuvre,
+// but it is still drawn and tracked as a real gradual lane transition.
+app.clearScenario();
+app.state.drivingMode='unrestricted';
+app.state.vehicles={A:preparedCar(),B:{...preparedCar(),lane:2,targetLane:2,autoLaneChange:false,exitArm:'none'}};
+app.normalizeVehicles();
+app.advanceVehicles(5);
+assert(app.state.vehicles.A.laneChange,'Unrestricted mode should start manoeuvre');
+assert.equal(app.state.vehicles.A.laneChange.toLane,2);
+assert(app.getActivity().events.some(e=>e.event==='lane change started'));
+app.state.drivingMode='safe';
 console.log('Browser startup, SVG render, controls, playback and replay smoke-test passed.');
