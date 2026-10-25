@@ -124,4 +124,37 @@ assert(app.state.vehicles.A.laneChange,'Unrestricted mode should start manoeuvre
 assert.equal(app.state.vehicles.A.laneChange.toLane,2);
 assert(app.getActivity().events.some(e=>e.event==='lane change started'));
 app.state.drivingMode='safe';
+// User-declared dual-spiral exit: ring 2 connects directly to outbound lane
+// 2; ring 3 has NO declared exit path, so it must not cut across ring 2.
+app.clearScenario();
+elements.exitLaneMode.value='spiral-dual';
+elements.exitLaneMode.onchange();
+assert.equal(app.state.exitLaneModes.North,'spiral-dual');
+assert.match(elements.exitLaneNotice.textContent,/circulating 2/);
+assert.match(elements.view.innerHTML,/1→1 · 2→2/);
+app.state.vehicles={A:{...preparedCar(),lane:2,targetLane:2,
+ angle:(exitStart-1+360)%360,exitLane:1,autoLaneChange:true},B:spareCar()};
+app.normalizeVehicles();
+app.advanceVehicles(5);
+assert.equal(app.state.vehicles.A.side,'exiting','Declared ring 2 exit should be reachable');
+assert.equal(app.state.vehicles.A.exitLane,2,'Declared lane connection selects outbound 2');
+assert(app.getActivity().events.some(e=>e.event==='marked exit'));
+app.clearScenario();
+app.state.vehicles={A:{...preparedCar(),lane:3,targetLane:3,
+ angle:(exitStart-1+360)%360,autoLaneChange:true},B:spareCar()};
+app.normalizeVehicles();
+app.advanceVehicles(5);
+assert.equal(app.state.vehicles.A.side,'circulating','Unmapped inner lane cannot exit');
+assert.equal(app.state.vehicles.A.lane,3);
+assert(app.getActivity().events.some(e=>e.event==='missed exit'));
+assert(!app.getActivity().events.some(e=>e.event==='marked exit'));
+
+// An unopted, previously saved vehicle still uses its original exit behaviour.
+app.clearScenario();
+app.state.vehicles={A:{...preparedCar(),lane:3,targetLane:3,
+ angle:(exitStart-1+360)%360,autoLaneChange:false},B:spareCar()};
+app.normalizeVehicles();
+app.advanceVehicles(5);
+assert.equal(app.state.vehicles.A.side,'exiting','Legacy opted-out scenarios are unchanged');
+app.state.exitLaneModes.North='conventional';
 console.log('Browser startup, SVG render, controls, playback and replay smoke-test passed.');
