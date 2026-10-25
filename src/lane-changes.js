@@ -11,9 +11,13 @@ const LaneChanges=(()=>{
  }
  function exitPlan(config,v,exitAngle){
   const enabled=v.autoLaneChange===true&&isRightTurn(v.arm,v.exitArm)&&v.exitArm!=='none';
-  const steps=Math.max(0,Math.min(config.circulating-1,v.lane-1));
+  const exitRules=typeof ExitLaneRules!=='undefined'?ExitLaneRules:require('./exit-lane-rules.js');
+  const mode=enabled?exitRules.mode(config,v.exitArm):'conventional';
+  // User-declared spiral connectors are fixed paths, not discretionary
+  // outward lane changes. Lanes without such connectors must keep circling.
+  const steps=enabled&&mode==='spiral-dual'?0:Math.max(0,Math.min(config.circulating-1,v.lane-1));
   const remaining=mod(exitAngle-v.angle);
-  return {enabled,steps,remainingDegrees:remaining,spanDegrees:SPAN,
+  return {enabled,mode,steps,remainingDegrees:remaining,spanDegrees:SPAN,
    startWhenRemainingDegrees:steps*SPAN+EXIT_BUFFER,exitBufferDegrees:EXIT_BUFFER,
    requiresOuterLane:enabled&&steps>0};
  }
