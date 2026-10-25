@@ -1,6 +1,6 @@
 # Roundabout lane choice and safe outward transitions — UK Highway Code
 
-**Status:** Development specification, **not yet implemented** as physical lane changes. Apply to the common junction-independent routing/path engine. Last verified against the UK Highway Code on 25 October 2026.
+**Status:** V1.33 includes opt-in conventional outward lane-change motion; V1.34 includes user-declared dual-exit connector permissions. Surveyed physical spiral-lane geometry remains planned. Apply to the common junction-independent routing/path engine. Last verified against the UK Highway Code on 25 October 2026.
 
 **Official authority:** [GOV.UK — Highway Code, Using the road: Rules 184–187](https://www.gov.uk/guidance/the-highway-code/using-the-road-159-to-203#roundabouts-rules-184-to-190).
 
@@ -52,3 +52,8 @@ The current two-car engine uses `entry → merging → circulating → exiting �
 
 ## V1.33 implementation note
 The first **opt-in** outward-transition prototype is now implemented for a conventional right-turn route in `src/lane-changes.js`, `src/simulation.js`, and the shared pose/forecast adapters. Vehicles transition one circulating lane at a time when a simple target-body gap screen passes (safe mode), or deliberately skip that check in unrestricted mode. If the outside lane is not reached, the vehicle continues around and logs a missed exit instead of crossing multiple lanes instantaneously. The experiment is **off by default** to preserve V1.32 scenarios. Marked/spiral-lane semantics, signals/indicators, heavy vehicles, cyclists and continuous swept-envelope safety still need separate development; no real-world compliance or safety certification is claimed.
+
+## V1.34 exit-lane marking policy implemented
+A simple per-exit lane marking rule now exists in the running simulator. `conventional` requires entering the exit from the outside circulating lane, whereas an *illustrative* `spiral-dual` rule declares circulating lane 1→exit lane 1 and circulating lane 2→exit lane 2. The opt-in right-turn planner honours those explicit links and refuses to jump from lane 3 into an undeclared lane-2 connector. This provides a testable representation of lane **permissions**, not a physically surveyed spiral geometry. The actual markings, transition path through the arc, give-way and downstream interaction rules remain future work.
+
+The initial specification's opening status must be read as historical planning scope: **V1.33 implemented opt-in conventional outward changes, and V1.34 implements declared dual-exit connector permissions; validated continuous spiral-lane geometry has not yet been implemented.**
