@@ -49,3 +49,6 @@ The current two-car engine uses `entry → merging → circulating → exiting �
 7. Verify in the browser on Ubuntu after green CI, and keep map-derived/imported lane markings editable/explicitly uncertain.
 
 **Never describe these lane-change behaviours as existing features until implemented and verified.**
+
+## V1.33 implementation note
+The first **opt-in** outward-transition prototype is now implemented for a conventional right-turn route in `src/lane-changes.js`, `src/simulation.js`, and the shared pose/forecast adapters. Vehicles transition one circulating lane at a time when a simple target-body gap screen passes (safe mode), or deliberately skip that check in unrestricted mode. If the outside lane is not reached, the vehicle continues around and logs a missed exit instead of crossing multiple lanes instantaneously. The experiment is **off by default** to preserve V1.32 scenarios. Marked/spiral-lane semantics, signals/indicators, heavy vehicles, cyclists and continuous swept-envelope safety still need separate development; no real-world compliance or safety certification is claimed.
