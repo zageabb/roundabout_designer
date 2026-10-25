@@ -19,8 +19,10 @@ const LaneChanges=(()=>{
  }
  function shouldAttempt(config,v,exitAngle){
   const p=exitPlan(config,v,exitAngle);
+  // Refuse a new move when there is no distance left to finish every
+  // required single-lane transition before the exit. Continue circulating.
   return p.requiresOuterLane&&!v.laneChange&&p.remainingDegrees<=p.startWhenRemainingDegrees
-    &&p.remainingDegrees>p.exitBufferDegrees;
+    &&p.remainingDegrees>=p.steps*p.spanDegrees+3;
  }
  function ringPose(config,v){
   const width=config.width*config.displayScale,inner=config.diameter*3.1;
