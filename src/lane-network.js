@@ -106,15 +106,22 @@ const LaneNetwork=(()=>{
   if(exitArm!=='none'&&!ARMS.includes(exitArm))throw Error('Invalid exit');
   const targetLane=Math.floor(v.targetLane||v.lane||1);
   if(!finiteInt(targetLane,1,config.circulating))throw Error('Invalid target circulating lane');
-  const exitLane=exitArm==='none'?null:Math.floor(v.exitLane||1);
-  if(exitArm!=='none'&&!finiteInt(exitLane,1,config.arms[exitArm].out))throw Error('Invalid exit lane');
+  const requestedExitLane=exitArm==='none'?null:Math.floor(v.exitLane||1);
+  if(exitArm!=='none'&&!finiteInt(requestedExitLane,1,config.arms[exitArm].out))throw Error('Invalid exit lane');
+  const right=exitArm!== 'none'&&exitArm===ARMS[(ARMS.indexOf(origin)+3)%4];
+  const opted=v.autoLaneChange===true&&right;
+  const rules=typeof ExitLaneRules!=='undefined'?ExitLaneRules:require('./exit-lane-rules.js');
+  const ringLane=(v.side==='entry'||v.side==='merging')?targetLane:Math.floor(v.lane||targetLane);
+  const selected=opted?rules.resolve(config,{...v,lane:ringLane,laneChange:null}):null;
+  const unconnected=Boolean(selected&&selected.mode!=='conventional'&&!selected.allowed);
+  const exitLane=unconnected?null:selected?.exitLane??requestedExitLane;
   const legal=exitArm==='none'||allowed.includes(exitArm);
   const steps=[laneId('in',origin,entryLane),ringId(origin,'merge-to-next-exit',targetLane)];
   if(exitArm!=='none'){
    let index=ARMS.indexOf(origin);
    do {
     const next=ARMS[(index+1)%4];
-    if(next===exitArm){steps.push(laneId('out',exitArm,exitLane));break}
+    if(next===exitArm){if(!unconnected)steps.push(laneId('out',exitArm,exitLane));break}
     steps.push(ringId(next,'exit-to-merge',targetLane));
     steps.push(ringId(next,'merge-to-next-exit',targetLane));
     index=(index+1)%4;
@@ -122,7 +129,8 @@ const LaneNetwork=(()=>{
   }
   return {origin,entryLane,destination:exitArm,exitLane,circulatingLane:targetLane,
    legal,violation:!legal,overrideEnabled:v.overrideExitRules===true,
-   availableExits:allowed,laneIds:steps,kind:exitArm==='none'?'circulate':'to-exit'};
+   availableExits:allowed,laneIds:steps,connectorAvailable:!unconnected,
+   kind:exitArm==='none'?'circulate':unconnected?'unconnected-exit':'to-exit'};
  }
  // Geometry used by the sprite renderer and the trajectory/trail recorder.
  // Both paths deliberately sample the same existing cubic merge/exit curves.
