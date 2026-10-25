@@ -21,7 +21,7 @@ function draw(){
    for(let i=1;i<a.in;i++)svg+=line(-ei+i*w,join+65,-ei+i*w,end,'#e3e8e9',2,'13 11');
    for(let i=1;i<a.out;i++)svg+=line(i*w,join+65,i*w,end,'#e3e8e9',2,'13 11');
    // Give-way line is drawn only across the entering lanes.
-   svg+=line(-ei-flare*.55,join+30,-10,join+30,'white',4,'10 7');
+   if(PriorityRules.entryControl(state,name)==='give-way')svg+=line(-ei-flare*.55,join+30,-10,join+30,'white',4,'10 7');
    for(let i=0;i<a.in;i++){
      const x=-ei+(i+.5)*w;
      if(state.laneNumbers)svg+=text(x,join+105,String(i+1),Math.min(15,w*.47),'#ffcf87');
