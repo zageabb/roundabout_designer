@@ -1,3 +1,33 @@
+function renderExitConnectorEditor(){
+ const holder=$('exitConnectorEditor');
+ if(ExitLaneRules.selected(state,active)!=='custom'){holder.innerHTML='';return}
+ const assigned=new Map((state.exitLaneConnectors?.[active]||[]).map(x=>[x.fromLane,x.exitLane]));
+ const outgoing=state.arms[active].out;
+ holder.innerHTML='<p class="muted">Declare permitted circulating → outbound lanes. Blank means no exit. Duplicate or crossing connections are rejected.</p>'+
+ Array.from({length:state.circulating},(_,i)=>{
+  const from=i+1,value=assigned.get(from)||0;
+  return '<div class="row"><label>Circulating '+from+'</label><select data-custom-exit-source="'+from+'">'+
+   '<option value="0"'+(!value?' selected':'')+'>No exit</option>'+
+   Array.from({length:outgoing},(_,j)=>'<option value="'+(j+1)+'"'+(value===j+1?' selected':'')+'>Exit lane '+(j+1)+'</option>').join('')+
+   '</select></div>';
+ }).join('');
+ holder.querySelectorAll('select[data-custom-exit-source]').forEach(select=>select.onchange=()=>{
+  const from=Number(select.dataset.customExitSource),to=Number(select.value);
+  const candidate=new Map(assigned);
+  if(to===0)candidate.delete(from);else candidate.set(from,to);
+  const updated=[...candidate].map(([fromLane,exitLane])=>({fromLane,exitLane})).sort((a,b)=>a.fromLane-b.fromLane);
+  const original=state.exitLaneConnectors[active];
+  state.exitLaneConnectors[active]=updated;
+  const issues=ExitLaneRules.customIssues(state,active);
+  if(issues.length){
+   state.exitLaneConnectors[active]=original;
+   updateStatus('Connector rejected: '+issues.join('; '));
+  }else{
+   stopPlayback();clearScenario();updateStatus('Saved custom exit connections for '+active+'.')
+  }
+  renderControls();draw();
+ });
+}
 function markedExitSummary(v){
  if(!v.autoLaneChange||!LaneChanges.isRightTurn(v.arm,v.exitArm))
   return 'Right-turn exit mapping is inactive for this car.';
@@ -46,7 +76,8 @@ function renderControls(){
  const a=state.arms[active];$('entryPriority').value=PriorityRules.entryControl(state,active);$('incoming').value=a.in;$('outgoing').value=a.out;
  const marking=ExitLaneRules.describe(state,active);
  $('exitLaneMode').value=marking.selected;
- $('exitLaneNotice').textContent=(marking.supported?'':'Requires ≥2 circulating and ≥2 outgoing lanes; conventional rule applies until available. ')+marking.label+' This is a user-declared example, not an imported marking survey.';
+ $('exitLaneNotice').textContent=(marking.supported?'':'Current marked rule is invalid/unsupported; conventional rule is active. ')+marking.label+' These are user-declared, not surveyed markings.';
+ renderExitConnectorEditor();
  $('lanes').innerHTML=a.moves.map((m,i)=>'<div class="lane"><label>Lane '+(i+1)+'</label><select data-lane="'+i+'">'+moves.map(x=>'<option value="'+x+'"'+(x===m?' selected':'')+'>'+labels[x]+'</option>').join('')+'</select></div>').join('');
  $('lanes').querySelectorAll('select').forEach(s=>s.onchange=()=>{stopPlayback();clearScenario();a.moves[+s.dataset.lane]=s.value;renderVehicles();draw();renderConnectivity()});renderConnectivity();renderVehicles();
 }
@@ -60,6 +91,9 @@ function validateNetwork(config){
    if(!Array.isArray(arm.moves)||arm.moves.length!==arm.in||arm.moves.some(m=>!moves.includes(m)))issues.push(name+': invalid permitted movements');
  }
  if(!Number.isInteger(config.circulating)||config.circulating<1||config.circulating>5)issues.push('Circulating lane count must be 1–5');
+ for(const arm of ['North','East','South','West'])if(ExitLaneRules.selected(config,arm)==='custom'){
+  issues.push(...ExitLaneRules.customIssues(config,arm).map(issue=>arm+': '+issue));
+ }
  return issues;
 }
 function renderConnectivity(){
@@ -79,7 +113,15 @@ $('showRoutes').onchange=()=>{state.showRoutes=$('showRoutes').checked;draw()};
 inputValue('incoming',1,6,1,v=>{const a=state.arms[active];a.in=v;while(a.moves.length<v)a.moves.push('S');a.moves.length=v});
 inputValue('outgoing',1,6,1,v=>state.arms[active].out=v);
 $('entryPriority').onchange=()=>{stopPlayback();clearScenario();state.entryPriority[active]=PriorityRules.normalizeControl($('entryPriority').value);renderControls();draw();};
-$('exitLaneMode').onchange=()=>{stopPlayback();clearScenario();state.exitLaneModes[active]=$('exitLaneMode').value==='spiral-dual'?'spiral-dual':'conventional';renderControls();draw();};
+$('exitLaneMode').onchange=()=>{
+ stopPlayback();clearScenario();
+ const requested=$('exitLaneMode').value;
+ if(requested==='custom'&&!Array.isArray(state.exitLaneConnectors?.[active])){
+  state.exitLaneConnectors[active]=ExitLaneRules.initialCustom(state,active);
+ }
+ state.exitLaneModes[active]=['spiral-dual','custom'].includes(requested)?requested:'conventional';
+ renderControls();draw();
+};
 $('drivingMode').value=state.drivingMode;
 $('minGap').value=state.minGap;
 $('drivingMode').onchange=()=>{stopPlayback();clearScenario();state.drivingMode=$('drivingMode').value;draw()};
