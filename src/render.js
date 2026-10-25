@@ -87,8 +87,9 @@ function draw(){
  const fill=id==='A'?'#f5ba43':'#4bb9f3';
  const placement='translate('+pose.x+' '+pose.y+') rotate('+pose.heading+')';
  svg+='<g transform="'+placement+'">';
- svg+='<rect x="-13" y="-20" width="26" height="40" rx="7" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
- svg+='<rect x="-9" y="-10" width="18" height="12" rx="3" fill="#dceef5" stroke="#19354b"/>';
+ const bodyWidth=v.widthMetres*state.displayScale,bodyLength=v.lengthMetres*state.displayScale;
+ svg+='<rect x="'+(-bodyWidth/2)+'" y="'+(-bodyLength/2)+'" width="'+bodyWidth+'" height="'+bodyLength+'" rx="6" fill="'+fill+'" stroke="#19354b" stroke-width="2.5"/>';
+ svg+='<rect x="'+(-bodyWidth*.36)+'" y="'+(-bodyLength*.26)+'" width="'+(bodyWidth*.72)+'" height="'+(bodyLength*.27)+'" rx="3" fill="#dceef5" stroke="#19354b"/>';
  svg+='<text x="0" y="3" font-size="16" fill="#102d42" font-weight="800" text-anchor="middle" dominant-baseline="middle">'+id+'</text></g>';
  }
  svg+='</g></svg>';
