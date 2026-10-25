@@ -2,6 +2,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=require('./read_app').readAppSource();
 const LaneNetwork=require('../src/lane-network.js');
+const ExitLaneRules=require('../src/exit-lane-rules.js');
 const PriorityRules=require('../src/priority-rules.js');
 const ConflictProjection=require('../src/conflict-projection.js');
 function section(a,b){const i=html.indexOf(a),j=html.indexOf(b,i);assert(i>=0&&j>i,'Missing '+a);return html.slice(i,j)}
@@ -20,7 +21,7 @@ const state={circulating:3,width:4,displayScale:9.5,diameter:38,minGap:8,driving
  South:{in:4,out:2,moves:['L','LS','S','R']},
  West:{in:3,out:2,moves:['LS','S','R']}
  },vehicles:{}};
-const context=vm.createContext({state,structuredClone,LaneNetwork,PriorityRules,ConflictProjection,entryAngles:{North:0,East:90,South:180,West:270},
+const context=vm.createContext({state,structuredClone,LaneNetwork,ExitLaneRules,PriorityRules,ConflictProjection,entryAngles:{North:0,East:90,South:180,West:270},
  renderVehicles(){},draw(){},$:id=>id==='vehicles'?{querySelectorAll(){return []}}:{value:20},
  safeAdvance:()=>({A:2,B:2})});
 const api=vm.runInContext(funcs+'\n;({allowedExitArms,selectableExitArms,violatesExitRule,normalizeVehicles,mergingPathsConflict,entryGapClear,advanceEntries,exitSweep,exitGeometry,circularExitStart,advanceVehicles});',context);
