@@ -53,3 +53,10 @@
 - Follow [ROUNDABOUT_LANE_CHANGE_RULES.md](ROUNDABOUT_LANE_CHANGE_RULES.md) before implementing any automatic inward-to-outward transition. Rule 186 means remain inside **until needing to change lanes to exit**, not continuously drift outward while circulating. Respect roundabout-specific lane arrows and spiral exits.
 - Model each lane connector, actual swept body, time-dependent safe gap, turn indicator and exit movement separately. A driver signalling left does not gain lane-change priority. Preserve a safe blocked-lane/missed-exit outcome and intentional rule-break override behaviour.
 - **These movement features are planned, not currently implemented.** Never misdescribe them as passing CI or live on Ubuntu until actual implementation/tests exist.
+
+## V1.33 opt-in outward manoeuvre contract
+- `LaneChanges` is a pure shared geometry/gap module; `LaneNetwork.sampleVehiclePose` must use its curved pose during an active `laneChange`. Avoid a sudden lateral jump on completion.
+- Only a vehicle with `autoLaneChange===true` on a right-turn route participates. Preserve **off by default**, legacy exit handling, East entry lane overrides, and JSON round trips.
+- In safe mode, use target-lane body clearance before starting **each** outward step; a blocked move must not be bypassed by forced exit. When the exit is passed without prior completion, log `missed exit` and keep circulating. Unrestricted mode may deliberately violate gap checks.
+- One lane per transition; no unvalidated multi-lane teleportation. A spiral/painted lane must eventually use a dedicated connector, not this default lateral movement.
+- Keep `tests/check_lane_changes.js`, `tests/check_runtime.js`, old merge and trajectory tests in CI. Do not market the fixed 22° path/gap screen as validated highway geometry or continuous swept-body collision prevention.
