@@ -66,8 +66,10 @@ const LaneNetwork=(()=>{
    for(let lane=1;lane<=config.circulating;lane++){
     connectors.push({id:'continue:'+arm+':'+lane,from:ringId(arm,'exit-to-merge',lane),to:ringId(arm,'merge-to-next-exit',lane),type:'continuation',nodeId:'node:'+arm+':entry'});
     connectors.push({id:'passing:'+next+':'+lane,from:ringId(arm,'merge-to-next-exit',lane),to:ringId(next,'exit-to-merge',lane),type:'continuation',nodeId:'node:'+next+':exit'});
-    for(let out=1;out<=config.arms[next].out;out++){
-     connectors.push({id:'leave:'+next+':'+lane+':'+out,from:ringId(arm,'merge-to-next-exit',lane),to:laneId('out',next,out),type:'diverge',nodeId:'node:'+next+':exit',provisional:true});
+    const exitRules=typeof ExitLaneRules!=='undefined'?ExitLaneRules:require('./exit-lane-rules.js');
+    for(const link of exitRules.connectors(config,next).filter(link=>link.fromLane===lane)){
+     const out=link.exitLane;
+     connectors.push({id:'leave:'+next+':'+lane+':'+out,from:ringId(arm,'merge-to-next-exit',lane),to:laneId('out',next,out),type:'diverge',nodeId:'node:'+next+':exit',marking:link.type,provisional:true});
     }
     for(let entry=1;entry<=a.in;entry++){
      connectors.push({id:'join:'+arm+':'+entry+':'+lane,from:laneId('in',arm,entry),to:ringId(arm,'merge-to-next-exit',lane),type:'merge',nodeId:'node:'+arm+':entry',control:'give-way',provisional:true});
