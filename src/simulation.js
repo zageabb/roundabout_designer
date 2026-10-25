@@ -59,6 +59,25 @@ function projectedVehicleInteraction(){
    el.textContent='No close vehicle-body interaction projected in the next 8 seconds. Minimum sampled body clearance '+report.closestSimultaneousMetres.toFixed(1)+' m.';
   }
  }
+ const timing=$('zoneTiming');
+ if(timing){
+  const occ=report.occupancy;
+  const windows=items=>items.slice(0,2).map(w=>w.enterSeconds.toFixed(2)+'–'+w.exitSeconds.toFixed(2)+' s').join(', ')+(items.length>2?' (+'+(items.length-2)+' visits)':'');
+  if(!report.zone){
+   timing.textContent='No shared vehicle-body zone identified within the forecast horizon.';
+   timing.className='status zone-timing';
+  }else if(occ.nearest){
+   const pair=occ.nearest;
+   const relation=pair.simultaneous
+     ?'Predicted shared-zone occupancy overlaps for '+pair.overlapSeconds.toFixed(2)+' s (from t='+pair.overlapStartSeconds.toFixed(2)+' to '+pair.overlapEndSeconds.toFixed(2)+' s).'
+     :'Predicted shared-zone use is separated by '+pair.gapSeconds.toFixed(2)+' s.';
+   timing.textContent='Zone timing — A: '+windows(occ.A)+'; B: '+windows(occ.B)+'. '+relation+' Approximate sampling; not a verified collision.';
+   timing.className='status zone-timing'+(pair.simultaneous?' conflict-warning':' conflict-spatial');
+  }else{
+   timing.textContent='A possible shared zone was identified, but both arrival/departure windows could not be resolved at this sampling rate.';
+   timing.className='status zone-timing';
+  }
+ }
  return report;
 }
 function recordScenarioEvent(vehicle,event,detail){
