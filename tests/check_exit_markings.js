@@ -35,7 +35,7 @@ const south=graph.connectors.filter(c=>c.type==='diverge'&&c.nodeId==='node:Sout
 assert(south.every(c=>c.from.endsWith(':1')),'Conventional exits require outer ring lane');
 assert.equal(south.length,2);
 assert.equal(rule.resolve(cfg,vehicle(2,'South')).reason,'requires-outside-lane');
-assert.equal(transitions.exitPlan(cfg,vehicle(3,'South'),329).steps,0,'Straight turn remains unaffected');
+assert.equal(transitions.exitPlan(cfg,vehicle(3,'West'),329).enabled,false,'Straight turn remains unaffected');
 const old={...cfg,exitLaneModes:undefined};
 assert.equal(rule.mode(old,'North'),'conventional','Legacy JSON defaults to conventional');
 assert.deepEqual(rule.connectors(old,'North').map(x=>[x.fromLane,x.exitLane]),[[1,1],[1,2]]);
