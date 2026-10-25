@@ -48,3 +48,8 @@
 - Do not equate an **overlapping shared-zone window** with body collision or legal fault. The approximated circular zone may include cars whose actual rectangles are mutually clear. Maintain independent body-overlap, zone-window and priority/rule classifications.
 - Respect the distinction between spatial overlap at **different times** and temporal interval overlap. Keep multiple visits as separate windows and leave empty occupancy explicitly unresolved rather than inventing arrival times.
 - Run `tests/check_zones.js`, `tests/check_footprints.js`, `tests/check_conflicts.js` and `tests/check_runtime.js` when changing timing, geometry, forecast adapters, or marker drawing. Keep browser-only/offline operation and existing safe/risky behaviour unchanged until accepted priority-control logic exists.
+
+## UK roundabout lane-change constraints
+- Follow [ROUNDABOUT_LANE_CHANGE_RULES.md](ROUNDABOUT_LANE_CHANGE_RULES.md) before implementing any automatic inward-to-outward transition. Rule 186 means remain inside **until needing to change lanes to exit**, not continuously drift outward while circulating. Respect roundabout-specific lane arrows and spiral exits.
+- Model each lane connector, actual swept body, time-dependent safe gap, turn indicator and exit movement separately. A driver signalling left does not gain lane-change priority. Preserve a safe blocked-lane/missed-exit outcome and intentional rule-break override behaviour.
+- **These movement features are planned, not currently implemented.** Never misdescribe them as passing CI or live on Ubuntu until actual implementation/tests exist.
