@@ -29,7 +29,7 @@ function renderControls(){
  $('circulating').value=state.circulating;$('diameter').value=state.diameter;$('width').value=state.width;$('displayScale').value=state.displayScale;$('laneNumbers').checked=state.laneNumbers;$('showRoutes').checked=state.showRoutes;
  $('tabs').innerHTML=Object.keys(state.arms).map(d=>'<button class="'+(d===active?'on':'')+'" data-arm="'+d+'">'+d+'</button>').join('');
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.arm;renderControls()});
- const a=state.arms[active];$('incoming').value=a.in;$('outgoing').value=a.out;
+ const a=state.arms[active];$('entryPriority').value=PriorityRules.entryControl(state,active);$('incoming').value=a.in;$('outgoing').value=a.out;
  $('lanes').innerHTML=a.moves.map((m,i)=>'<div class="lane"><label>Lane '+(i+1)+'</label><select data-lane="'+i+'">'+moves.map(x=>'<option value="'+x+'"'+(x===m?' selected':'')+'>'+labels[x]+'</option>').join('')+'</select></div>').join('');
  $('lanes').querySelectorAll('select').forEach(s=>s.onchange=()=>{stopPlayback();clearScenario();a.moves[+s.dataset.lane]=s.value;renderVehicles();draw();renderConnectivity()});renderConnectivity();renderVehicles();
 }
@@ -61,6 +61,7 @@ $('laneNumbers').onchange=()=>{state.laneNumbers=$('laneNumbers').checked;draw()
 $('showRoutes').onchange=()=>{state.showRoutes=$('showRoutes').checked;draw()};
 inputValue('incoming',1,6,1,v=>{const a=state.arms[active];a.in=v;while(a.moves.length<v)a.moves.push('S');a.moves.length=v});
 inputValue('outgoing',1,6,1,v=>state.arms[active].out=v);
+$('entryPriority').onchange=()=>{stopPlayback();clearScenario();state.entryPriority[active]=PriorityRules.normalizeControl($('entryPriority').value);renderControls();draw();};
 $('drivingMode').value=state.drivingMode;
 $('minGap').value=state.minGap;
 $('drivingMode').onchange=()=>{stopPlayback();clearScenario();state.drivingMode=$('drivingMode').value;draw()};
