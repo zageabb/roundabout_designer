@@ -15,7 +15,7 @@ const LaneChanges=(()=>{
   const mode=enabled?exitRules.mode(config,v.exitArm):'conventional';
   // User-declared spiral connectors are fixed paths, not discretionary
   // outward lane changes. Lanes without such connectors must keep circling.
-  const steps=enabled&&mode==='spiral-dual'?0:Math.max(0,Math.min(config.circulating-1,v.lane-1));
+  const steps=enabled&&mode!=='conventional'?0:Math.max(0,Math.min(config.circulating-1,v.lane-1));
   const remaining=mod(exitAngle-v.angle);
   return {enabled,mode,steps,remainingDegrees:remaining,spanDegrees:SPAN,
    startWhenRemainingDegrees:steps*SPAN+EXIT_BUFFER,exitBufferDegrees:EXIT_BUFFER,
