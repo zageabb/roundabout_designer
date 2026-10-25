@@ -36,3 +36,9 @@
 - `LaneNetwork.sampleVehiclePose` must remain the common source for rendered A/B positions and recorded trails. Curve callbacks may temporarily come from the legacy roundabout; replace only when tested for position and heading continuity.
 - Provisional merge/exit lane connectors are **not** evidence of geometric feasibility or safety. Conflict analysis requires actual path intersections, vehicle envelopes, occupancy windows, give-way rules and reliable timings before labelling a possible interaction.
 - Run `tests/check_network.js`, `tests/check_runtime.js` and all existing CI tests when changing lane indexing, entry counts, route selection or pose calculations.
+
+## V1.30 vehicle-body projection safety
+- Vehicle dimensions are `lengthMetres` / `widthMetres` in the scenario, defaulting to 4.4 / 1.8 for legacy saves. Use identical metres in `ConflictEngine.assessFootprints` and SVG body dimensions multiplied by `displayScale`.
+- Preserve the existing safe/unrestricted motion choices. Body predictions must remain a non-invasive advisory overlay until a deterministic yielding/braking integration has explicit behavioural acceptance tests.
+- Spatial body proximity at different projected times must not be relabelled a simultaneous overlap; projection screening is not an accident/fault assessment. Keep sampled/constant-speed limitations conspicuous.
+- Include `tests/check_footprints.js`, `tests/check_conflicts.js` and `tests/check_runtime.js` in CI for changes affecting pose, dimensions, classifications or route physics.
