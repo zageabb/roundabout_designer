@@ -138,3 +138,9 @@ A pure `LaneNetwork` component now generates 8 roundabout nodes, directed ring/a
 - A new readout and optional road marker distinguish possible simultaneous 2.4-metre centreline proximity within eight seconds from a crossing at different times. The projection makes **no** driving/braking or accident-fault decisions.
 - Before calling the model a true vehicle conflict analysis engine, extend to sampled vehicle rectangles/swept area, geometric conflict-zone intervals, time-of-arrival windows conditional on actual yielding, crossing/merge/following classification and regression against visual test fixtures. Next validate the same pure kernel using a generic priority T-junction route fixture.
 - Current A/B preview is explicitly small-scale, static/offline and approximate; avoid expanding it to mass traffic simulation without profiling and extracting a Worker.
+
+## V1.30 footprint-aware conflict screening milestone
+- Editable car length/width now influence both SVG vehicle size and projected interaction analysis. The pure `ConflictEngine.assessFootprints` reports estimated edge-to-edge separation of sampled oriented rectangles, rather than treating two nearby centrelines as an automatic interaction.
+- The existing time separation layer is preserved: coincident **place** without coincident **time** remains distinct from possible simultaneous body proximity. Preliminary interaction types: following, merging, exiting/diverging, crossing.
+- The current viewer's amber/blue warning markers remain **advisory**. Neither the geometric forecast nor individual driver's prohibited-turn flag is a validated collision finding, behavioural control or assessment of accident fault.
+- Remaining milestones: swept rectangular trajectories between samples, reusable conflict zones with occupancy intervals, car-following and priority-aware time evolution, priority T-junction regression fixture, and a bounded/performance-measured multi-vehicle engine.
