@@ -13,6 +13,8 @@ jobs:
         run: node tests/check_network.js
       - name: Verify projected path interactions and temporal separation
         run: node tests/check_conflicts.js
+      - name: Validate sized vehicle footprint interactions
+        run: node tests/check_footprints.js
       - name: Exercise road geometry
         run: node tests/check_geometry.js
       - name: Check smooth vehicle merge trajectories
