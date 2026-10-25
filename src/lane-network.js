@@ -115,6 +115,10 @@ const LaneNetwork=(()=>{
   const width=config.width*config.displayScale,inner=config.diameter*3.1,outer=inner+config.circulating*width;
   const angleByArm={South:0,West:90,North:180,East:270};
   if(v.side==='circulating'){
+   if(v.laneChange){
+    const transitions=typeof LaneChanges!=='undefined'?LaneChanges:require('./lane-changes.js');
+    return transitions.ringPose(config,v);
+   }
    const radius=inner+(config.circulating-v.lane+.5)*width;
    const angle=v.angle*Math.PI/180;
    return {x:radius*Math.sin(angle),y:-radius*Math.cos(angle),heading:v.angle+90,phase:'circulating'};
