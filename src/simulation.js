@@ -336,6 +336,9 @@ function advanceVehicles(delta){
     recordScenarioEvent(id,'lane change blocked','Outer circulating lane '+(v.lane-1)+' occupied; keep circulating');
    }
   }
+  // An exit is only usable if the outside lane was reached *before*
+  // the simulation step crosses its mouth, never midway through that step.
+  const outsideAtStepStart=v.lane===1&&!v.laneChange;
   if(v.laneChange&&LaneChanges.advance(v,increment)){
    recordScenarioEvent(id,'lane change completed','Now circulating lane '+v.lane);
    renderVehicles();
@@ -343,7 +346,7 @@ function advanceVehicles(delta){
   // In opted-in right-turn planning an inner-lane car may NOT jump across
   // intervening lanes into the exit; it continues round for another chance.
   if(exit!==null&&crossesClockwiseAngle(v.angle,increment,exit)){
-   if(prepared&&(v.lane>1||v.laneChange)){
+   if(prepared&&!outsideAtStepStart){
     v.angle=(v.angle+increment+360)%360;
     recordScenarioEvent(id,'missed exit','Could not reach outside lane safely; continue circulating');
    }else{
