@@ -33,7 +33,7 @@ function markedExitSummary(v){
   return 'Right-turn exit mapping is inactive for this car.';
  const preview={...v,lane:v.side==='entry'||v.side==='merging'?v.targetLane:v.lane};
  const rule=ExitLaneRules.resolve(state,preview);
- if(rule.mode==='spiral-dual'){
+ if(rule.mode!=='conventional'){
   return rule.allowed
    ?'Marked exit connector: circulating lane '+preview.lane+' → '+v.exitArm+' exit lane '+rule.exitLane+'. No discretionary outward change. Schematic geometry only.'
    :'No declared marked exit connector from circulating lane '+preview.lane+'. Choose a supported entry/target lane; otherwise the car will continue circulating.';
