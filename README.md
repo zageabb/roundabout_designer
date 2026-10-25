@@ -80,3 +80,11 @@ Classic scripts currently share scope for backwards compatibility; pure ES modul
 - **Show projected conflict location** draws a blue ring for paths intersecting at different forecast times and an amber ring for possible simultaneous proximity. The toggle is included in saved JSON.
 - This is a non-invasive visual warning; **Safe following**, **Unrestricted / risky**, playback and legal/override exit selection all still behave as before. It does not determine a crash or driving responsibility.
 - The numerical kernel lives in `src/conflict-engine.js` and can be reused for future junction types. `src/conflict-projection.js` currently adapts roundabout movement and intentionally assumes constant speed with no yielding/braking. The model's 2.4 m centreline proximity threshold is a visual screening convention, **not** a calibrated clearance standard.
+
+## V1.30 adjustable vehicle dimensions and body conflicts
+
+Vehicle A and B cards now allow **Length (m)** and **Width (m)** to be edited independently (default **4.4 × 1.8 m**). The roundabout drawing scales each car to these dimensions and the values are preserved in exported/imported JSON. This lets you compare a compact car with a long vehicle on the same scenario.
+
+The **Projected route interaction** preview compares sampled **oriented car bodies**, not just centre points. It reports preliminary crossing/merge/diverge/following interactions and indicates whether predicted proximity occurs at the same time (amber) or only when considering the paths at different times (blue). The current body-edge screening margin is **0.15 m**; it is a user-interface threshold, not an engineering safety standard.
+
+Predictions still assume constant configured angular speeds and do not simulate yielding, braking, real-world vehicle swept paths between samples, legal fault, or a confirmed collision. The existing safe and unrestricted playback modes remain unchanged. Regression tests cover car dimensions, projected interactions, route overrides and UI rendering.
