@@ -28,6 +28,9 @@ assert.equal(rule.resolve(cfg,{...vehicle(2),laneChange:{fromLane:2,toLane:1,pro
 
 const graph=net.build(cfg);
 const north=graph.connectors.filter(c=>c.type==='diverge'&&c.nodeId==='node:North:exit');
+const suggested=graph.turns.find(t=>t.origin==='East'&&t.lane===3&&t.destination==='North');
+assert.equal(suggested.circulatingLane,2,'Spiral right-turn suggestion must use an available ring lane');
+assert.equal(suggested.exitLane,2,'Spiral exit recommendation matches the protected link');
 assert.deepEqual(north.map(c=>[c.id,c.marking]).sort(),[
  ['leave:North:1:1','marked-spiral-continuation'],['leave:North:2:2','marked-spiral-continuation']
 ]);
