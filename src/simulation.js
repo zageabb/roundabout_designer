@@ -147,6 +147,8 @@ function normalizeVehicles(){
  const v=state.vehicles[id]||{arm:'North',side:'entry',lane:1};
  v.arm=['North','East','South','West'].includes(v.arm)?v.arm:'North';
  v.side=['entry','exit','circulating','merging','exiting'].includes(v.side)?v.side:'entry';
+ v.autoLaneChange=v.autoLaneChange===true;
+ v.laneChangeBlocked=v.laneChangeBlocked===true;
  v.angle=((Number(v.angle??45)%360)+360)%360;
  v.speed=Math.max(0,Math.min(90,Number(v.speed??20)||0));
  v.lengthMetres=Math.max(3,Math.min(12,Number(v.lengthMetres)||4.4));
@@ -166,6 +168,11 @@ function normalizeVehicles(){
  v.targetLane=Math.max(1,Math.min(state.circulating,Math.floor(Number(v.targetLane??v.lane)||1)));
  const limit=v.side==='circulating'?state.circulating:state.arms[v.arm][v.side==='exit'?'out':'in'];
  v.lane=Math.max(1,Math.min(limit,Math.floor(Number(v.lane)||1)));
+ if(v.side==='circulating'&&v.laneChange&&Number.isInteger(v.laneChange.fromLane)&&v.laneChange.fromLane===v.lane&&
+    v.laneChange.toLane===v.lane-1&&v.laneChange.toLane>=1){
+  v.laneChange={fromLane:v.lane,toLane:v.lane-1,spanDegrees:LaneChanges.SPAN,
+   progress:Math.max(0,Math.min(.9999,Number(v.laneChange.progress)||0))};
+ }else v.laneChange=null;
  state.vehicles[id]=v;
  }
 }
@@ -315,8 +322,33 @@ function advanceVehicles(delta){
  const v=state.vehicles[id];
  if(v.side==='circulating'){
   const increment=increments[id];
-  if(v.exitArm&&v.exitArm!=='none'&&crossesClockwiseAngle(v.angle,increment,circularExitStart(v.exitArm,state))){
-   v.angle=circularExitStart(v.exitArm,state);v.side='exiting';v.exitProgress=0;renderVehicles();
+  const exit=v.exitArm&&v.exitArm!=='none'?circularExitStart(v.exitArm,state):null;
+  const prepared=v.autoLaneChange&&LaneChanges.isRightTurn(v.arm,v.exitArm);
+  if(prepared&&exit!==null&&!v.laneChange&&LaneChanges.shouldAttempt(state,v,exit)){
+   const other=state.vehicles[id==='A'?'B':'A'];
+   if(state.drivingMode!=='safe'||LaneChanges.gapClear(state,v,other,
+      Math.max(1,Math.min(90,Number($('playSpeed').value)||20)),state.minGap)){
+    v.laneChange=LaneChanges.begin(v);v.laneChangeBlocked=false;
+    recordScenarioEvent(id,'lane change started','Outward from circulating '+v.lane+' to '+(v.lane-1));
+    renderVehicles();
+   }else if(!v.laneChangeBlocked){
+    v.laneChangeBlocked=true;
+    recordScenarioEvent(id,'lane change blocked','Outer circulating lane '+(v.lane-1)+' occupied; keep circulating');
+   }
+  }
+  if(v.laneChange&&LaneChanges.advance(v,increment)){
+   recordScenarioEvent(id,'lane change completed','Now circulating lane '+v.lane);
+   renderVehicles();
+  }
+  // In opted-in right-turn planning an inner-lane car may NOT jump across
+  // intervening lanes into the exit; it continues round for another chance.
+  if(exit!==null&&crossesClockwiseAngle(v.angle,increment,exit)){
+   if(prepared&&(v.lane>1||v.laneChange)){
+    v.angle=(v.angle+increment+360)%360;
+    recordScenarioEvent(id,'missed exit','Could not reach outside lane safely; continue circulating');
+   }else{
+    v.angle=exit;v.side='exiting';v.exitProgress=0;v.laneChange=null;renderVehicles();
+   }
   }else v.angle=(v.angle+increment+360)%360;
  }else if(v.side==='exiting'){
   v.exitProgress=Math.min(1,v.exitProgress+delta*Math.max(0,v.speed/20)/55);
