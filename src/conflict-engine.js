@@ -195,6 +195,6 @@ const ConflictEngine=(()=>{
   };
  }
 
- return Object.freeze({assess,assessFootprints,footprint,polygonDistance,closestSegments,interpolate});
+ return Object.freeze({assess,assessFootprints,footprint,polygonDistance,closestSegments,interpolate,interpolatePose});
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=ConflictEngine;
