@@ -3,7 +3,7 @@
 from pathlib import Path
 import re
 
-html = Path("index.html").read_text() + "\n" + "\n".join(Path("src", name).read_text() for name in ("state.js", "lane-network.js", "exit-lane-rules.js", "lane-changes.js", "conflict-engine.js", "conflict-zones.js", "conflict-projection.js", "priority-rules.js", "simulation.js", "controls.js", "geometry.js", "render.js", "bootstrap.js"))
+html = Path("index.html").read_text() + "\n" + "\n".join(Path("src", name).read_text() for name in ("state.js", "lane-network.js", "exit-lane-rules.js", "marked-exit-geometry.js", "lane-changes.js", "conflict-engine.js", "conflict-zones.js", "conflict-projection.js", "priority-rules.js", "simulation.js", "controls.js", "geometry.js", "render.js", "bootstrap.js"))
 assert "['South',0],['West',90],['North',180],['East',270]" in html
 for name, inbound, outbound, moves in (
     ("North", 3, 2, "LS','S','R"),
