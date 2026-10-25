@@ -10,7 +10,7 @@ assert.equal(simultaneous.model,'sampled-oriented-rectangles');
 assert.equal(simultaneous.type,'possible_overlap');
 assert.equal(simultaneous.interactionKind,'crossing');
 assert.equal(simultaneous.closestSimultaneousMetres,0);
-assert(Math.abs(simultaneous.timeSeconds-5)<=1);
+assert(simultaneous.timeSeconds>=3&&simultaneous.timeSeconds<=7,'Full car bodies may overlap before their centres meet');
 
 const delayed=straight([[0,0,-30],[5,0,-20],[10,0,-10],[15,0,0],[20,0,10]],180);
 const offTime=assessFootprints(crossingA,delayed);
