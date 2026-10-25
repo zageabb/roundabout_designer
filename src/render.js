@@ -32,6 +32,9 @@ function draw(){
      svg+=line(x,join+145,x,join+175,'white',3);
      svg+='<path d="M '+(x-5)+' '+(join+165)+' L '+x+' '+(join+176)+' L '+(x+5)+' '+(join+165)+'" fill="none" stroke="white" stroke-width="3"/>';
    }
+   if(ExitLaneRules.mode(state,name)==='spiral-dual'){
+     svg+='<text x="'+(w*.85)+'" y="'+(join+62)+'" font-size="11" fill="#9be5f5" text-anchor="middle" aria-label="User-declared marked exit">1→1 · 2→2</text>';
+   }
    svg+='</g>';
  }
  // Route lines show movement connectivity, NOT exact vehicle swept paths.
