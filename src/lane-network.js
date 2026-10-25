@@ -76,12 +76,25 @@ const LaneNetwork=(()=>{
     }
    }
   }
+  const exitRules=typeof ExitLaneRules!=='undefined'?ExitLaneRules:require('./exit-lane-rules.js');
   const turns=movements(config).map(m=>{
    const suggestion=suggestedLane(config,m.movement,m.destination);
+   const links=exitRules.connectors(config,m.destination);
+   // Recommend an actually DECLARED exit connector, not an impossible
+   // inner-to-outside shortcut on a user-selected spiral layout.
+   const selected=links.find(link=>link.fromLane===suggestion.circulatingLane)
+    ||links.reduce((best,link)=>Math.abs(link.fromLane-suggestion.circulatingLane)<
+       Math.abs(best.fromLane-suggestion.circulatingLane)?link:best);
+   const circularLane=exitRules.mode(config,m.destination)==='spiral-dual'
+    ?selected.fromLane:suggestion.circulatingLane;
+   const outboundLane=exitRules.mode(config,m.destination)==='spiral-dual'
+    ?selected.exitLane:suggestion.exitLane;
    return {...m,id:'turn:'+m.origin+':'+m.lane+':'+m.destination,
     entryLaneId:laneId('in',m.origin,m.lane),
-    exitLaneId:laneId('out',m.destination,suggestion.exitLane),
-    ...suggestion,legal:true,status:'provisional'};
+    exitLaneId:laneId('out',m.destination,outboundLane),
+    circulatingLane:circularLane,exitLane:outboundLane,
+    exitMarking:exitRules.mode(config,m.destination),
+    legal:true,status:'provisional'};
   });
   return {version:1,type:'roundabout',direction:'clockwise',handedness:'left',
    nodes,segments,lanes,connectors,turns};
