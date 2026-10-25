@@ -60,17 +60,20 @@ const ConflictProjection=(()=>{
  function assessVehicles(config,vehicles,geometry,options={}){
   const samplesA=forecast(config,vehicles.A,geometry,options);
   const samplesB=forecast(config,vehicles.B,geometry,options);
-  const core=typeof ConflictEngine!=='undefined'?ConflictEngine:require('./conflict-engine.js');
-  const result=core.assessFootprints(samplesA,samplesB,{
+  const zones=typeof ConflictZones!=='undefined'?ConflictZones:require('./conflict-zones.js');
+  const result=zones.assess(samplesA,samplesB,{
    lengthA:vehicles.A.lengthMetres??4.4,widthA:vehicles.A.widthMetres??1.8,
    lengthB:vehicles.B.lengthMetres??4.4,widthB:vehicles.B.widthMetres??1.8,
-   marginMetres:options.marginMetres??0.15,stepSeconds:0.15
+   marginMetres:options.marginMetres??0.15,stepSeconds:0.15,
+   zoneRadiusMetres:options.zoneRadiusMetres??0.9,
+   zoneStepSeconds:options.zoneStepSeconds??0.1
   });
-  return {...result,point:result.point?{
-   x:result.point.x*config.displayScale,
-   y:result.point.y*config.displayScale}:null,
+  const scale=config.displayScale;
+  return {...result,
+   point:result.point?{x:result.point.x*scale,y:result.point.y*scale}:null,
+   zone:result.zone?{...result.zone,x:result.zone.x*scale,y:result.zone.y*scale}:null,
    horizonSeconds:Number(options.horizonSeconds??8),
-   assumption:'sampled vehicle rectangles at constant speed; ignores priority, yielding, braking and continuous swept-body motion'};
+   assumption:'sampled vehicle-body zone windows under constant speed; ignores priority, yielding, braking and continuous swept-body motion'};
  }
  return Object.freeze({forecast,assessVehicles});
 })();
