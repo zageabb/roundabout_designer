@@ -130,7 +130,7 @@ function trackScenarioTick(delta,before){
  for(const id of ['A','B']){
   const v=state.vehicles[id],old=before[id];
   if(v.waiting)runState.waitSeconds[id]+=dt;
-  if(v.waiting&&!old.waiting)recordScenarioEvent(id,'waiting','Give-way gap');
+  if(v.waiting&&!old.waiting)recordScenarioEvent(id,'waiting',v.waitReason||'Give-way gap');
   if(!v.waiting&&old.waiting)recordScenarioEvent(id,'moving','Give-way released');
   if(v.side!==old.side){
    const event={merging:'merge started',circulating:'joined',exiting:'exit started',exit:'exited'}[v.side];
@@ -232,22 +232,36 @@ function mergeGeometry(v,progress,config){
  const heading=Math.atan2(dx,-dy)*180/Math.PI;
  return {x,y,heading,arrivalAngle:endAngle*180/Math.PI};
 }
+// Determine right-of-way through the same pure rule interpreter that a
+// priority T-junction can reuse later. The geometry forecast is a non-mutating
+// hypothetical merge; only the decision controls whether we start merging.
+function entryPriorityDecision(id){
+ const v=state.vehicles[id],other=state.vehicles[id==='A'?'B':'A'];
+ const control=PriorityRules.entryControl(state,v.arm);
+ const incumbent={...other};
+ const rel=other.arm===v.arm
+   ?LaneNetwork.mergeRelationship(v,{...other,lane:other.side==='circulating'?other.entryLane||other.lane:other.lane,
+       targetLane:other.side==='circulating'?other.lane:other.targetLane})
+   :{type:'other-approach',conflicts:false};
+ const playbackSpeed=Math.max(1,Math.min(90,Number($('playSpeed').value)||20));
+ const mergeSeconds=55/(playbackSpeed*Math.max(.001,v.speed/20));
+ // For an independent lane or no priority vehicle, avoid expensive projection.
+ if(rel.type==='parallel-independent'||!['circulating','merging'].includes(other.side)||
+    control==='none'||other.side==='merging'&&rel.conflicts){
+  return PriorityRules.decideMerge({control,entrant:v,incumbent:other,relationship:rel,mergeDurationSeconds:mergeSeconds});
+ }
+ const hypothetical={...v,side:'merging',mergeProgress:0,waiting:false};
+ const report=ConflictProjection.assessVehicles(state,{A:hypothetical,B:incumbent},{
+  mergeGeometry,exitGeometry,circularExitStart,sampleVehiclePose:LaneNetwork.sampleVehiclePose
+ },{horizonSeconds:Math.min(8,Math.max(4,mergeSeconds+.75)),stepSeconds:.25,
+    playbackSpeed});
+ return PriorityRules.decideMerge({control,entrant:hypothetical,incumbent,
+   relationship:rel,forecast:report,mergeDurationSeconds:mergeSeconds});
+}
 function entryGapClear(id){
- const v=state.vehicles[id],target=entryAngles[v.arm];
- const other=state.vehicles[id==='A'?'B':'A'];
- if(other.side==='merging'&&mergingPathsConflict(v,other))return false;
- if(other.side!=='circulating')return true;
- // Vehicles from separate entry lanes following their matching circulating
- // lanes may merge in parallel; the old check held lane 2 behind lane 1.
- if(other.arm===v.arm&&other.entryLane!==v.lane&&other.lane===other.entryLane&&v.targetLane===v.lane&&other.lane!==v.targetLane)return true;
- // Check along the entry's intended outer lane; this is a prototype,
- // conservative at high circulating speeds, not a validated gap model.
- if(other.lane>v.targetLane)return true; // only crossed lanes and the destination lane
- const ahead=(other.angle-target+360)%360;
- const behind=(target-other.angle+360)%360;
- const speed=other.speed*Math.max(1,Number($('playSpeed').value)||20)/20;
- const upstream=Math.min(170,Math.max(42,speed*2+15));
- return !(ahead<32||behind<upstream);
+ const decision=entryPriorityDecision(id);
+ state.vehicles[id].waitReason=decision.allow?'':decision.reason;
+ return decision.allow;
 }
 function advanceEntries(delta){
  for(const id of ['A','B']){
