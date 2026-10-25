@@ -304,7 +304,14 @@ function exitGeometry(v,progress,config){
  const x0=radius*Math.sin(beta),y0=radius*Math.cos(beta);
  const x3=(v.exitLane-.5)*w,y3=outer+142;
  const lateral=Math.max(0,x0-x3);
- const handle=Math.min(72,Math.max(0,lateral*.78/Math.cos(beta)),Math.max(10,y3-y0)*.7);
+ const marked=ExitLaneRules.mode(config,v.exitArm)!=='conventional'&&v.autoLaneChange&&
+  LaneChanges.isRightTurn(v.arm,v.exitArm);
+ // A marked inner→outbound connector can initially curve back towards the
+ // inside before leaving. Preserve the exact circular tangent even where
+ // x3>x0 (the old lateral-only handle collapsed to zero and jumped heading).
+ const minimumTangent=marked?Math.min(22,w*.35):0;
+ const handle=Math.max(minimumTangent,
+  Math.min(72,Math.max(0,lateral*.78/Math.cos(beta)),Math.max(10,y3-y0)*.7));
  const x1=x0-handle*Math.cos(beta),y1=y0+handle*Math.sin(beta);
  const x2=x3,y2=y3-Math.min(75,(y3-y0)*.4);
  const t=Math.max(0,Math.min(1,progress)),u=1-t;
