@@ -11,6 +11,8 @@ jobs:
         run: python3 tests/check_layout.py
       - name: Validate shared lane-network and vehicle pose contracts
         run: node tests/check_network.js
+      - name: Check declared exit markings and spiral connectors
+        run: node tests/check_exit_markings.js
       - name: Verify Highway Code outward lane-change planner and target-lane safety
         run: node tests/check_lane_changes.js
       - name: Verify projected path interactions and temporal separation
