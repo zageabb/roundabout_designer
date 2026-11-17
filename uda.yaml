@@ -1,0 +1,28 @@
+schema_version: 1
+application:
+  name: roundabout-designer
+  display_name: Roundabout Designer
+  group: Open
+source:
+  branch: main
+runtime:
+  type: static
+  working_dir: .
+build:
+  working_dir: .
+  commands: []
+service:
+  type: static
+  port: 5093
+  health_path: /
+proxy:
+  enabled: true
+  path: /apps/roundabout-designer/
+  authentication: uda
+environment:
+  required: []
+deployment:
+  auto_update: true
+  rollback: true
+  github_reporting: false
+
