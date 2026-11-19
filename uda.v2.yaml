@@ -1,0 +1,39 @@
+# V2 review candidate; no activation authority
+schema_version: 2
+application:
+  name: roundabout-designer
+  kind: web
+  display_name: "Roundabout Designer"
+  group: "Open"
+source:
+  branch: main
+  repository: "zageabb/roundabout_designer"
+builds:
+  - name: stage-public
+    toolchain: static
+    working_dir: .
+    commands:
+      - ["python3", "tools/uda_stage_static.py"]
+    output_dir: build/uda-public
+    artifact:
+      path: build/uda-public
+      kind: static
+      base_path: /apps/roundabout-designer/
+      activate: atomic-symlink
+static:
+  output_dir: build/uda-public
+  publication: atomic-symlink
+  base_path: /apps/roundabout-designer/
+proxy:
+  enabled: true
+  upstream: static
+  canonical_path: /apps/roundabout-designer/
+  authentication: uda
+environment:
+  required: []
+deployment:
+  strategy: static
+  approval: explicit
+  auto_update: false
+  rollback: true
+  github_reporting: false
