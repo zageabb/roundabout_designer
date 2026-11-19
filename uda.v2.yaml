@@ -8,8 +8,20 @@ application:
 source:
   branch: main
   repository: "zageabb/roundabout_designer"
+builds:
+  - name: stage-public
+    toolchain: static
+    working_dir: .
+    commands:
+      - ["python3", "tools/uda_stage_static.py"]
+    output_dir: build/uda-public
+    artifact:
+      path: build/uda-public
+      kind: static
+      base_path: /apps/roundabout-designer/
+      activate: atomic-symlink
 static:
-  output_dir: "."
+  output_dir: build/uda-public
   publication: atomic-symlink
   base_path: /apps/roundabout-designer/
 proxy:
