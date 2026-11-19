@@ -1,0 +1,27 @@
+# V2 review candidate; no activation authority
+schema_version: 2
+application:
+  name: roundabout-designer
+  kind: web
+  display_name: "Roundabout Designer"
+  group: "Open"
+source:
+  branch: main
+  repository: "zageabb/roundabout_designer"
+static:
+  output_dir: "."
+  publication: atomic-symlink
+  base_path: /apps/roundabout-designer/
+proxy:
+  enabled: true
+  upstream: static
+  canonical_path: /apps/roundabout-designer/
+  authentication: uda
+environment:
+  required: []
+deployment:
+  strategy: static
+  approval: explicit
+  auto_update: false
+  rollback: true
+  github_reporting: false
