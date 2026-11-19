@@ -65,6 +65,8 @@ def stage() -> dict:
         p = Path(rel)
         if p.is_absolute() or ".." in p.parts or p.parts[0].startswith("."):
             raise RuntimeError(f"Unsafe allowed path: {rel}")
+    if not (ROOT / "index.html").is_file() or (ROOT / "index.html").is_symlink():
+        raise RuntimeError("Missing or symlink index.html")
     parser = _HTMLAssets()
     parser.feed((ROOT / "index.html").read_text(encoding="utf-8"))
     missing_refs = parser.paths - expected
