@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from html.parser import HTMLParser
+from urllib.parse import urlsplit
 import stat
 import sys
 
@@ -29,6 +31,27 @@ ALLOWLIST = (
     "src/bootstrap.js"
 )
 
+class _HTMLAssets(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.paths = set()
+
+    def handle_starttag(self, tag, attrs):
+        keys = {"script": "src", "link": "href", "img": "src", "source": "src"}
+        key = keys.get(tag)
+        if not key:
+            return
+        for name, raw in attrs:
+            if name != key or not raw:
+                continue
+            parsed = urlsplit(raw)
+            if parsed.scheme or parsed.netloc or raw.startswith(("/", "#", "data:")):
+                continue
+            rel = parsed.path.removeprefix("./")
+            if rel:
+                self.paths.add(rel)
+
+
 def stage() -> dict:
     # Never remove an existing output tree or mutate repository source.
     if OUTPUT.exists() or OUTPUT.is_symlink():
@@ -42,6 +65,11 @@ def stage() -> dict:
         p = Path(rel)
         if p.is_absolute() or ".." in p.parts or p.parts[0].startswith("."):
             raise RuntimeError(f"Unsafe allowed path: {rel}")
+    parser = _HTMLAssets()
+    parser.feed((ROOT / "index.html").read_text(encoding="utf-8"))
+    missing_refs = parser.paths - expected
+    if missing_refs:
+        raise RuntimeError("HTML refers to unpublished local assets: " + ", ".join(sorted(missing_refs)))
     # Preflight every file before creating output.
     validated = []
     for rel in ALLOWLIST:
