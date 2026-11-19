@@ -56,6 +56,15 @@ class StagingTests(unittest.TestCase):
             self.stage_module.stage()
         self.assertEqual(marker.read_text(), "unchanged")
 
+    def test_unallowlisted_html_asset_reference_blocks_staging(self):
+        self.populate()
+        (self.root / "index.html").write_text(
+            '<html><script src="private.js"></script></html>')
+        (self.root / "private.js").write_text("not approved")
+        with self.assertRaises(RuntimeError):
+            self.stage_module.stage()
+        self.assertFalse(self.stage_module.OUTPUT.exists())
+
     def test_symlink_asset_is_rejected(self):
         self.populate()
         target = self.root / self.stage_module.ALLOWLIST[0]
